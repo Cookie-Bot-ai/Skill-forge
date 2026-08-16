@@ -672,7 +672,7 @@
       <div class="card" id="spellingbee-intro">
         <p class="section-label">Spelling bee warm-up</p>
         <p class="q-prompt" style="font-size:18px;">Listen to each word read aloud, then type the correct spelling. 10 words per round.</p>
-        <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Uses your browser's built-in text-to-speech. You can replay a word, and ask for its meaning, as many times as you like.</p>
+        <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Plays a real recorded pronunciation when available (needs internet), with your browser's voice as a backup. You can replay a word, and ask for its meaning, as many times as you like.</p>
         <p class="section-label" style="margin-top:0;">Word difficulty</p>
         <div class="pill-row" id="spellingbee-level-row">
           <button class="pill" data-sblevel="basic">Basic</button>
@@ -687,7 +687,7 @@
             <button class="pill selected" data-rate="0.85">Normal</button>
           </div>
         </div>
-        <button class="btn btn-secondary" id="voice-test-btn" style="margin-top:10px;">🔊 Test this voice</button>
+        <button class="btn btn-secondary" id="voice-test-btn" style="margin-top:10px;">🔊 Test backup voice</button>
         <button class="btn btn-stamp english" id="spellingbee-start-btn" style="margin-top:18px;">Start spelling bee</button>
         <button class="link-btn" id="spellingbee-skip-btn" style="display:block; margin:14px auto 0;">Skip warm-up →</button>
       </div>
@@ -2959,17 +2959,72 @@ if(rateRow){
   });
 }
 if(voiceTestBtn){
-  voiceTestBtn.addEventListener('click', ()=>speakWord('This is what the spelling bee will sound like.'));
+  voiceTestBtn.addEventListener('click', ()=>speakWithBrowserTTS('This is your backup voice, used when a real recording isn\'t available.'));
 }
 
-function speakWord(word){
+/* --- Word audio: try a real recorded pronunciation first (much clearer than synthetic
+   speech), and only fall back to the browser's built-in voice if none is found (e.g. offline,
+   or an uncommon word with no recording). Requires internet for the recorded-audio lookup;
+   the TTS fallback still works offline. --- */
+const wordAudioCache = {}; // word -> audio URL string, or null if none found
+let currentWordAudio = null;
+
+async function fetchWordAudioUrl(word){
+  const key = word.toLowerCase();
+  if(key in wordAudioCache) return wordAudioCache[key];
+  try {
+    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(key)}`);
+    if(!res.ok){ wordAudioCache[key] = null; return null; }
+    const data = await res.json();
+    let url = null;
+    if(Array.isArray(data)){
+      for(const entry of data){
+        if(!Array.isArray(entry.phonetics)) continue;
+        for(const p of entry.phonetics){
+          if(p.audio && p.audio.trim().length>0){
+            url = p.audio.startsWith('http') ? p.audio : ('https:'+p.audio);
+            break;
+          }
+        }
+        if(url) break;
+      }
+    }
+    wordAudioCache[key] = url;
+    return url;
+  } catch(e){
+    wordAudioCache[key] = null;
+    return null;
+  }
+}
+
+function speakWithBrowserTTS(text){
   if(!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(word);
+  const utter = new SpeechSynthesisUtterance(text);
   if(selectedVoice){ utter.voice = selectedVoice; utter.lang = selectedVoice.lang; }
   else { utter.lang = 'en-AU'; }
   utter.rate = selectedRate;
   window.speechSynthesis.speak(utter);
+}
+
+async function speakWord(word){
+  if(currentWordAudio){ try{ currentWordAudio.pause(); }catch(e){} currentWordAudio = null; }
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+  const isSingleWord = /^[a-zA-Z]+$/.test(word.trim());
+  if(isSingleWord){
+    const url = await fetchWordAudioUrl(word);
+    if(url){
+      try {
+        const audio = new Audio(url);
+        audio.playbackRate = selectedRate <= 0.75 ? 0.75 : 1; // only slow down real recordings if "Slow" is chosen
+        currentWordAudio = audio;
+        await audio.play();
+        return;
+      } catch(e){ /* fall through to browser voice below */ }
+    }
+  }
+  speakWithBrowserTTS(word);
 }
 
 function sbCurrentWord(){ return sbState.words[sbState.index]; }
@@ -3019,7 +3074,7 @@ function submitSpellingAnswer(){
 }
 
 sbInput.addEventListener('keydown', e=>{ if(e.key==='Enter') submitSpellingAnswer(); });
-sbReplayBtn.addEventListener('click', ()=>speakWord(sbCurrentWord()));
+sbReplayBtn.addEventListener('click', ()=>speakWord(sbCurrentWord().w));
 
 function endSpellingBee(){
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
