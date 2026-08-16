@@ -2997,8 +2997,9 @@ async function fetchWordAudioUrl(word){
   }
 }
 
-function speakWithBrowserTTS(text){
+function speakWithBrowserTTS(textInput){
   if(!('speechSynthesis' in window)) return;
+  const text = (textInput && typeof textInput === 'object' && 'w' in textInput) ? String(textInput.w) : String(textInput);
   window.speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(text);
   if(selectedVoice){ utter.voice = selectedVoice; utter.lang = selectedVoice.lang; }
@@ -3007,7 +3008,11 @@ function speakWithBrowserTTS(text){
   window.speechSynthesis.speak(utter);
 }
 
-async function speakWord(word){
+async function speakWord(wordInput){
+  // Defensive: always coerce to a plain string, so a stray object reference
+  // (e.g. a {w, def} pair passed by mistake) can never end up spoken as "[object Object]".
+  const word = (wordInput && typeof wordInput === 'object' && 'w' in wordInput) ? String(wordInput.w) : String(wordInput);
+
   if(currentWordAudio){ try{ currentWordAudio.pause(); }catch(e){} currentWordAudio = null; }
   if('speechSynthesis' in window) window.speechSynthesis.cancel();
 
