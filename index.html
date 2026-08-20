@@ -560,6 +560,7 @@
 
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn selected" id="tab-practice-btn">Practice</button>
+    <button class="tab-btn" id="tab-naplan-btn">NAPLAN</button>
     <button class="tab-btn" id="tab-history-btn">History</button>
   </div>
 
@@ -629,6 +630,53 @@
 
     <button class="btn btn-stamp" id="start-btn" disabled>Choose year, subject &amp; topic</button>
     <p id="home-error" style="color:var(--bad); font-size:13px; text-align:center; margin-top:10px; display:none;"></p>
+  </div>
+
+  <!-- NAPLAN PRACTICE HOME VIEW -->
+  <div id="naplan-home-view" class="view">
+    <div class="card">
+      <p class="section-label">About NAPLAN Practice</p>
+      <p style="font-size:14px; color:var(--ink-2); line-height:1.6;">NAPLAN-style practice questions, matched to the actual test structure for Numeracy and Spelling. NAPLAN is sat in Years 3, 5, 7 and 9 — this covers Years 7 and 9. Results here are kept separate from your regular Practice history and weak-spot tracking.</p>
+    </div>
+    <div class="card">
+      <p class="section-label">Year level</p>
+      <div class="pill-row" id="naplan-year-row">
+        <button class="pill" data-naplan-year="7">Year 7</button>
+        <button class="pill" data-naplan-year="9">Year 9</button>
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-label">Domain</p>
+      <div class="subject-grid" id="naplan-domain-row">
+        <div class="subject-card maths" data-naplan-domain="numeracy">
+          <svg class="subject-icon" viewBox="0 0 24 24" fill="none" stroke="#C6832A" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="7" y1="11" x2="7.01" y2="11"/><line x1="12" y1="11" x2="12.01" y2="11"/><line x1="17" y1="11" x2="17.01" y2="11"/><line x1="7" y1="15" x2="7.01" y2="15"/><line x1="12" y1="15" x2="12.01" y2="15"/><line x1="17" y1="15" x2="17.01" y2="15"/><line x1="7" y1="19" x2="17" y2="19"/></svg>
+          <div class="subject-name">Numeracy</div>
+          <div class="subject-sub">Mixed number & maths</div>
+        </div>
+        <div class="subject-card english" data-naplan-domain="spelling">
+          <svg class="subject-icon" viewBox="0 0 24 24" fill="none" stroke="#20685E" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <div class="subject-name">Spelling</div>
+          <div class="subject-sub">Conventions of Language</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-stamp" id="naplan-start-btn" disabled>Choose a year &amp; domain</button>
+  </div>
+
+  <!-- NAPLAN RESULTS VIEW -->
+  <div id="naplan-results-view" class="view">
+    <div class="card score-hero" id="naplan-results-hero">
+      <div><div class="score-num" id="naplan-score-num">0/0</div></div>
+      <div>
+        <div class="score-band" id="naplan-score-band">—</div>
+        <div class="score-sub" id="naplan-score-sub">—</div>
+      </div>
+    </div>
+    <div id="naplan-review-list"></div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="naplan-retry-btn">Try another NAPLAN test</button>
+      <button class="btn btn-stamp" id="naplan-home-btn">Back to NAPLAN home</button>
+    </div>
   </div>
 
   <!-- WARMUP VIEW -->
@@ -886,6 +934,28 @@ function uniqueStrOptions(correct, candidates, padFn){
   }
   return out;
 }
+
+/* --- Word-problem flavour: wraps bare arithmetic in varied real-world phrasing so the
+   same numbers don't always appear in an identical bare "a + b" format on repeat plays.
+   Uses temperature/money/elevation framing since these values can be genuinely negative. --- */
+const WP_NAMES = ['Maya','Liam','Zoe','Noah','Aisha','Leo','Ruby','Kai','Ella','Sam','Priya','Jack','Chen','Mia','Oscar','Tara'];
+function wrapAddSub(a, b, op, ans){
+  const name = pick(WP_NAMES);
+  if(op==='+'){
+    const templates = [
+      `Calculate: ${a} + (${b})`,
+      `The temperature was ${a}°C, then it changed by ${b>=0?'+':''}${b}°C. What is the new temperature (in °C)?`,
+      `${name}'s bank balance was $${a}. A transaction of $${b} was applied. What is the new balance (in $)?`,
+    ];
+    return pick(templates);
+  }
+  const templates = [
+    `Calculate: ${a} - (${b})`,
+    `The temperature was ${a}°C. Find the temperature after it drops by ${b}°C.`,
+    `${name} is standing at an elevation of ${a}m. Find the elevation after descending ${b}m.`,
+  ];
+  return pick(templates);
+}
 function numDistractors(correct, tweaks){
   const seen = new Set([correct]);
   const out = [];
@@ -909,7 +979,8 @@ M7.integers = (diff) => {
   if(diff==='basic'){
     const a=rnd(-15,15), b=rnd(-15,15), op=pick(['+','-']);
     const ans = op==='+' ? a+b : a-b;
-    return numQ('Integers','basic',`Calculate: ${a} ${op} (${b})`, ans, {explanation:`${a} ${op} (${b}) = ${ans}`});
+    const prompt = wrapAddSub(a,b,op,ans);
+    return numQ('Integers','basic', prompt, ans, {explanation:`${a} ${op} (${b}) = ${ans}`});
   }
   if(diff==='intermediate'){
     const a=rnd(-12,12)||3, b=rnd(2,9)*(Math.random()<0.5?1:-1);
@@ -1267,7 +1338,8 @@ M8.directedNumbers = (diff) => {
   if(diff==='basic'){
     const a=rnd(-20,20), b=rnd(-20,20), op=pick(['+','-']);
     const ans = op==='+' ? a+b : a-b;
-    return numQ('Directed Numbers','basic', `Calculate: ${a} ${op} (${b})`, ans, {explanation:`${a} ${op} (${b}) = ${ans}`});
+    const prompt = wrapAddSub(a,b,op,ans);
+    return numQ('Directed Numbers','basic', prompt, ans, {explanation:`${a} ${op} (${b}) = ${ans}`});
   }
   if(diff==='intermediate'){
     const a=rnd(-12,12), b=rnd(2,9)*(Math.random()<0.5?1:-1), c=rnd(-8,8);
@@ -2630,7 +2702,7 @@ const TOPIC_SETS = {
 };
 
 /* ============================= APP STATE & UI ============================= */
-const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:20, questions:[], index:0, answers:[], studentName:'' };
+const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:20, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null };
 
 const studentNameInput = document.getElementById('student-name-input');
 studentNameInput.addEventListener('input', ()=>{ state.studentName = studentNameInput.value.trim(); });
@@ -2730,6 +2802,7 @@ startBtn.addEventListener('click', ()=>{
 });
 
 function topicSummaryLabel(){
+  if(state.isNaplan) return state.naplanDomain==='numeracy' ? 'NAPLAN Numeracy' : 'NAPLAN Spelling';
   const allTopics = TOPIC_SETS[state.year][state.subject];
   if(state.selectedTopics.size === allTopics.length) return 'All topics';
   const chosen = allTopics.filter(t=>state.selectedTopics.has(t.key));
@@ -2768,6 +2841,7 @@ function weightedTopicPick(topics){
 }
 
 function buildAndStartTest(){
+  state.isNaplan = false;
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   const allTopics = TOPIC_SETS[state.year][state.subject];
   const topics = allTopics.filter(t=>state.selectedTopics.has(t.key));
@@ -2790,6 +2864,127 @@ function buildAndStartTest(){
   showView('test-view');
   renderQuestion();
 }
+
+/* ============================= NAPLAN PRACTICE ============================= */
+let naplanYear = null;
+let naplanDomain = null;
+const naplanYearRow = document.getElementById('naplan-year-row');
+const naplanDomainRow = document.getElementById('naplan-domain-row');
+const naplanStartBtn = document.getElementById('naplan-start-btn');
+
+naplanYearRow.querySelectorAll('.pill').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    naplanYearRow.querySelectorAll('.pill').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    naplanYear = btn.dataset.naplanYear;
+    updateNaplanStartButton();
+  });
+});
+naplanDomainRow.querySelectorAll('.subject-card').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    naplanDomainRow.querySelectorAll('.subject-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    naplanDomain = card.dataset.naplanDomain;
+    updateNaplanStartButton();
+  });
+});
+function updateNaplanStartButton(){
+  const ready = naplanYear && naplanDomain;
+  naplanStartBtn.disabled = !ready;
+  naplanStartBtn.textContent = ready ? `Start NAPLAN ${naplanDomain==='numeracy'?'Numeracy':'Spelling'} practice (Year ${naplanYear})` : 'Choose a year & domain';
+  naplanStartBtn.className = 'btn btn-stamp' + (naplanDomain==='spelling' ? ' english' : '');
+}
+naplanStartBtn.addEventListener('click', ()=>{
+  if(!naplanYear || !naplanDomain) return;
+  buildAndStartNaplanTest();
+});
+
+function buildAndStartNaplanTest(){
+  Object.keys(usedBank).forEach(k=>delete usedBank[k]);
+  state.isNaplan = true;
+  state.naplanDomain = naplanDomain;
+  state.year = naplanYear;
+  state.level = 'intermediate'; // representative national-average difficulty spread
+
+  let questions;
+  if(naplanDomain==='numeracy'){
+    state.subject = 'maths';
+    const topics = TOPIC_SETS[naplanYear].maths;
+    const dist = distByLength(20, 'intermediate');
+    let sequence = [];
+    Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
+    sequence = shuffle(sequence);
+    questions = sequence.map(diff=>{
+      const topicObj = pick(topics);
+      const q = topicObj.gen(diff);
+      q.topicKey = topicObj.key;
+      q.reinforced = false;
+      return q;
+    });
+  } else {
+    state.subject = 'english';
+    const dist = distByLength(15, 'intermediate');
+    let sequence = [];
+    Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
+    sequence = shuffle(sequence);
+    questions = sequence.map(diff=>{
+      const q = genSpelling(diff);
+      q.topicKey = null;
+      q.reinforced = false;
+      return q;
+    });
+  }
+
+  state.questions = questions;
+  state.index = 0;
+  state.answers = new Array(questions.length).fill(null);
+  showView('test-view');
+  renderQuestion();
+}
+
+function showNaplanResults(){
+  const total = state.questions.length;
+  const correct = state.answers.filter(a=>a.isCorrect).length;
+  const pct = Math.round((correct/total)*100);
+  document.getElementById('naplan-score-num').textContent = `${correct}/${total}`;
+  let band, sub, color, glowClass;
+  if(pct>=90){ band='Excellent'; sub='Outstanding NAPLAN-style performance.'; color='var(--good)'; glowClass='glow-good'; }
+  else if(pct>=75){ band='Great effort'; sub='Solid result for this domain.'; color='var(--good)'; glowClass='glow-good'; }
+  else if(pct>=50){ band='Keep practising'; sub='Getting there — review the misses below.'; color='var(--amber-dark)'; glowClass='glow-amber'; }
+  else { band='Needs review'; sub='Worth another practice round before the real test.'; color='var(--bad)'; glowClass='glow-bad'; }
+  const bandEl = document.getElementById('naplan-score-band');
+  bandEl.textContent = `${band} — ${pct}%`;
+  bandEl.style.color = color;
+  document.getElementById('naplan-score-sub').textContent = `Year ${state.year} · ${state.naplanDomain==='numeracy'?'Numeracy':'Spelling'} · ${sub}`;
+  const heroEl = document.getElementById('naplan-results-hero');
+  heroEl.classList.remove('glow-good','glow-amber','glow-bad');
+  heroEl.classList.add(glowClass);
+
+  const rows = state.questions.map((q,i)=>{
+    const a = state.answers[i];
+    return {
+      q: {
+        prompt:q.prompt, topic:q.topic, difficulty:q.difficulty, type:q.type,
+        correctAnswer:q.type==='mcq'?q.correct:q.answer, unit:q.unit||'',
+        given:a.given, isCorrect:a.isCorrect, explanation:q.explanation||''
+      },
+      flagged:!!a.flagged, isCorrect:a.isCorrect
+    };
+  });
+  const flagged = rows.filter(r=>r.flagged);
+  const wrong = rows.filter(r=>!r.flagged && !r.isCorrect);
+  const right = rows.filter(r=>r.isCorrect);
+
+  let html = '';
+  if(flagged.length>0) html += `<p class="section-label">Let's break these down (${flagged.length})</p>` + flagged.map(r=>historyDetailCard(r.q,'flagged')).join('');
+  if(wrong.length>0) html += `<p class="section-label" style="margin-top:18px;">Questions to review (${wrong.length})</p>` + wrong.map(r=>historyDetailCard(r.q,'wrong')).join('');
+  if(right.length>0) html += `<p class="section-label" style="margin-top:18px;">Answered correctly (${right.length})</p>` + right.map(r=>historyDetailCard(r.q,'right')).join('');
+  document.getElementById('naplan-review-list').innerHTML = html;
+
+  showView('naplan-results-view');
+}
+document.getElementById('naplan-retry-btn').addEventListener('click', buildAndStartNaplanTest);
+document.getElementById('naplan-home-btn').addEventListener('click', ()=>switchTab('naplan'));
 
 /* --- Warm-up (60s quick mental maths) --- */
 const warmupMathsSection = document.getElementById('warmup-maths-section');
@@ -3203,7 +3398,7 @@ document.getElementById('flag-btn').addEventListener('click', ()=>{
 });
 
 document.getElementById('quit-btn').addEventListener('click', ()=>{
-  if(confirm('Quit this test? Your progress will not be saved.')) showView('home-view');
+  if(confirm('Quit this test? Your progress will not be saved.')) showView(state.isNaplan ? 'naplan-home-view' : 'home-view');
 });
 
 /* --- History persistence (localStorage) ---
@@ -3241,6 +3436,7 @@ function saveHistoryRecord(record){
 
 /* --- Results view --- */
 function showResults(){
+  if(state.isNaplan){ showNaplanResults(); return; }
   const total = state.questions.length;
   const correct = state.answers.filter(a=>a.isCorrect).length;
   const pct = Math.round((correct/total)*100);
@@ -3394,22 +3590,28 @@ function showView(id){
 
 /* ============================= HISTORY TAB ============================= */
 const tabPracticeBtn = document.getElementById('tab-practice-btn');
+const tabNaplanBtn = document.getElementById('tab-naplan-btn');
 const tabHistoryBtn = document.getElementById('tab-history-btn');
 let historyFilters = { student:'all' };
 
 function switchTab(tab){
+  tabPracticeBtn.classList.remove('selected');
+  tabNaplanBtn.classList.remove('selected');
+  tabHistoryBtn.classList.remove('selected');
   if(tab==='history'){
-    tabPracticeBtn.classList.remove('selected');
     tabHistoryBtn.classList.add('selected');
     renderHistoryView();
     showView('history-view');
+  } else if(tab==='naplan'){
+    tabNaplanBtn.classList.add('selected');
+    showView('naplan-home-view');
   } else {
-    tabHistoryBtn.classList.remove('selected');
     tabPracticeBtn.classList.add('selected');
     showView('home-view');
   }
 }
 tabPracticeBtn.addEventListener('click', ()=>switchTab('practice'));
+tabNaplanBtn.addEventListener('click', ()=>switchTab('naplan'));
 tabHistoryBtn.addEventListener('click', ()=>switchTab('history'));
 
 function renderStudentFilterRow(all){
