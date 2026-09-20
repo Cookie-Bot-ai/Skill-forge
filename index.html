@@ -466,6 +466,10 @@
     border-radius:var(--radius-lg);
   }
   .score-hero.glow-good{background:radial-gradient(circle at 100% 0%, rgba(46,158,91,0.12), transparent 60%);}
+
+  .ty-correct{color:var(--good); background:var(--good-bg); border-radius:2px;}
+  .ty-incorrect{color:var(--bad); background:var(--bad-bg); border-radius:2px; text-decoration:underline;}
+  .ty-cursor{background:var(--ink); color:#fff; border-radius:2px;}
   .score-hero.glow-amber{background:radial-gradient(circle at 100% 0%, rgba(198,131,42,0.12), transparent 60%);}
   .score-hero.glow-bad{background:radial-gradient(circle at 100% 0%, rgba(209,67,67,0.10), transparent 60%);}
   .score-num{
@@ -561,6 +565,7 @@
   <div class="tab-bar" id="tab-bar">
     <button class="tab-btn selected" id="tab-practice-btn">Practice</button>
     <button class="tab-btn" id="tab-naplan-btn">NAPLAN</button>
+    <button class="tab-btn" id="tab-typing-btn">Typing</button>
     <button class="tab-btn" id="tab-history-btn">History</button>
   </div>
 
@@ -676,6 +681,70 @@
     <div class="btn-row">
       <button class="btn btn-secondary" id="naplan-retry-btn">Try another NAPLAN test</button>
       <button class="btn btn-stamp" id="naplan-home-btn">Back to NAPLAN home</button>
+    </div>
+  </div>
+
+  <!-- TYPING PRACTICE HOME VIEW -->
+  <div id="typing-home-view" class="view">
+    <div class="card">
+      <p class="section-label">⌨️ Typing Practice</p>
+      <p style="font-size:14px; color:var(--ink-2); line-height:1.6;">Type as much of the text as you can before time runs out. Measures your words-per-minute (WPM) and accuracy.</p>
+    </div>
+    <div class="card">
+      <p class="section-label">Difficulty</p>
+      <div class="pill-row" id="typing-level-row">
+        <button class="pill" data-typing-level="basic">Easy words</button>
+        <button class="pill selected" data-typing-level="intermediate">Everyday sentences</button>
+        <button class="pill" data-typing-level="advanced">Advanced vocabulary</button>
+      </div>
+    </div>
+    <div class="card">
+      <p class="section-label">Time limit</p>
+      <div class="pill-row" id="typing-duration-row">
+        <button class="pill" data-typing-duration="30">30 seconds</button>
+        <button class="pill selected" data-typing-duration="60">60 seconds</button>
+        <button class="pill" data-typing-duration="120">2 minutes</button>
+      </div>
+    </div>
+    <button class="btn btn-stamp" id="typing-start-btn">Start typing test</button>
+  </div>
+
+  <!-- TYPING PRACTICE ACTIVE VIEW -->
+  <div id="typing-active-view" class="view">
+    <div class="test-top">
+      <div class="test-meta">TYPING PRACTICE</div>
+      <div class="test-meta" id="typing-timer">60s</div>
+    </div>
+    <div class="card">
+      <div id="typing-passage" style="font-family:'IBM Plex Mono'; font-size:17px; line-height:1.9; color:var(--ink-soft); white-space:pre-wrap; max-height:180px; overflow-y:auto;"></div>
+    </div>
+    <div class="card">
+      <textarea id="typing-input" rows="3" placeholder="Start typing here..." style="width:100%; padding:13px 16px; border-radius:12px; border:1.5px solid var(--rule); font-family:'IBM Plex Mono'; font-size:16px; resize:none;" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+    </div>
+    <div class="pill-row" style="text-align:center;">
+      <div class="history-stat-card"><div class="history-stat-num" id="typing-live-wpm">0</div><div class="history-stat-label">WPM</div></div>
+      <div class="history-stat-card"><div class="history-stat-num" id="typing-live-accuracy">100%</div><div class="history-stat-label">Accuracy</div></div>
+    </div>
+    <button class="link-btn" id="typing-quit-btn" style="display:block; margin:14px auto 0;">Quit to home</button>
+  </div>
+
+  <!-- TYPING PRACTICE RESULTS VIEW -->
+  <div id="typing-results-view" class="view">
+    <div class="card score-hero" id="typing-results-hero">
+      <div><div class="score-num" id="typing-final-wpm">0</div></div>
+      <div>
+        <div class="score-band" id="typing-final-band">—</div>
+        <div class="score-sub" id="typing-final-sub">—</div>
+      </div>
+    </div>
+    <div class="history-summary-row">
+      <div class="history-stat-card"><div class="history-stat-num" id="typing-result-accuracy">0%</div><div class="history-stat-label">Accuracy</div></div>
+      <div class="history-stat-card"><div class="history-stat-num" id="typing-result-chars">0</div><div class="history-stat-label">Characters typed</div></div>
+      <div class="history-stat-card"><div class="history-stat-num" id="typing-result-errors">0</div><div class="history-stat-label">Errors</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="typing-retry-btn">Try again</button>
+      <button class="btn btn-stamp" id="typing-home-btn">Back to Typing home</button>
     </div>
   </div>
 
@@ -2942,6 +3011,166 @@ function buildAndStartNaplanTest(){
   renderQuestion();
 }
 
+/* ============================= TYPING PRACTICE ============================= */
+const TYPING_CONTENT = {
+  basic: ['the','be','to','of','and','a','in','that','have','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day'],
+  intermediate: [
+    'The quick brown fox jumps over the lazy dog.',
+    'She sells seashells by the seashore every summer.',
+    'A journey of a thousand miles begins with a single step.',
+    'Practice makes perfect, so keep trying every day.',
+    'The early bird catches the worm in the morning.',
+    'Reading a good book can transport you to another world.',
+    'He walked to the store to buy some fresh bread.',
+    'The weather today is sunny with a gentle breeze.',
+    'Our team worked together to finish the project on time.',
+    'She plays the piano beautifully every Sunday afternoon.',
+    'The train arrived at the station exactly on schedule.',
+    'Learning new skills takes patience and consistent effort.',
+    'They planted a garden full of colourful flowers.',
+    'The children laughed and played in the park all day.',
+    'A balanced diet and regular exercise keep you healthy.',
+  ],
+  advanced: [
+    "The entrepreneur's resilience was evident throughout the challenging negotiation.",
+    'Meticulous preparation is essential for achieving a successful outcome.',
+    'The ambiguous instructions left the committee somewhat perplexed.',
+    'Her articulate explanation clarified the complex hypothesis entirely.',
+    'The extraordinary phenomenon fascinated scientists around the world.',
+    "Persistent dedication to one's craft often yields remarkable results.",
+    'The eccentric inventor pursued unconventional and inventive strategies.',
+    'Genuine collaboration requires transparency, patience, and mutual respect.',
+    'An inevitable consequence of negligence is diminished credibility.',
+    'The eloquent speaker captivated the audience with vivid, extraordinary anecdotes.',
+    'Diligent students often demonstrate exceptional academic achievement.',
+    'The catastrophe prompted an immediate and coordinated emergency response.',
+    'Her hesitant demeanour belied a fiercely independent and determined spirit.',
+    'The controversy sparked widespread debate among industry professionals.',
+    "A legitimate concern was raised regarding the proposal's feasibility.",
+  ]
+};
+function buildTypingPassage(level, minLength){
+  const bank = TYPING_CONTENT[level] || TYPING_CONTENT.intermediate;
+  let text = '';
+  while(text.length < minLength){ text += pick(bank) + ' '; }
+  return text.trim();
+}
+
+let typingLevel = 'intermediate';
+let typingDuration = 60;
+let typingState = { text:'', typed:'', startTime:null, duration:60, timeLeft:60, intervalId:null };
+
+const typingLevelRow = document.getElementById('typing-level-row');
+const typingDurationRow = document.getElementById('typing-duration-row');
+typingLevelRow.querySelectorAll('.pill').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    typingLevelRow.querySelectorAll('.pill').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    typingLevel = btn.dataset.typingLevel;
+  });
+});
+typingDurationRow.querySelectorAll('.pill').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    typingDurationRow.querySelectorAll('.pill').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    typingDuration = parseInt(btn.dataset.typingDuration,10);
+  });
+});
+
+function countCorrectChars(){
+  let c=0;
+  const n = Math.min(typingState.typed.length, typingState.text.length);
+  for(let i=0;i<n;i++){ if(typingState.typed[i]===typingState.text[i]) c++; }
+  return c;
+}
+function renderTypingPassage(){
+  const text = typingState.text, typed = typingState.typed;
+  let html = '';
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    let cls = '';
+    if(i < typed.length){ cls = typed[i]===ch ? 'ty-correct' : 'ty-incorrect'; }
+    else if(i === typed.length){ cls = 'ty-cursor'; }
+    const displayCh = ch===' ' ? '&nbsp;' : ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html += `<span class="${cls}">${displayCh}</span>`;
+  }
+  const passageEl = document.getElementById('typing-passage');
+  passageEl.innerHTML = html;
+  const cursorEl = passageEl.querySelector('.ty-cursor');
+  if(cursorEl && cursorEl.scrollIntoView) cursorEl.scrollIntoView({block:'nearest'});
+}
+function updateLiveTypingStats(){
+  const correctChars = countCorrectChars();
+  const totalTyped = typingState.typed.length;
+  const accuracy = totalTyped>0 ? Math.round((correctChars/totalTyped)*100) : 100;
+  let wpm = 0;
+  if(typingState.startTime){
+    const elapsedMin = (Date.now()-typingState.startTime)/60000;
+    wpm = elapsedMin>0 ? Math.round((correctChars/5)/elapsedMin) : 0;
+  }
+  document.getElementById('typing-live-wpm').textContent = wpm;
+  document.getElementById('typing-live-accuracy').textContent = accuracy+'%';
+}
+function startTypingTimer(){
+  typingState.intervalId = setInterval(()=>{
+    typingState.timeLeft--;
+    document.getElementById('typing-timer').textContent = typingState.timeLeft+'s';
+    if(typingState.timeLeft<=0){ clearInterval(typingState.intervalId); endTypingTest(); }
+  }, 1000);
+}
+function startTypingTest(){
+  typingState = { text: buildTypingPassage(typingLevel, 2500), typed:'', startTime:null, duration:typingDuration, timeLeft:typingDuration, intervalId:null };
+  document.getElementById('typing-timer').textContent = typingDuration+'s';
+  document.getElementById('typing-input').value = '';
+  document.getElementById('typing-live-wpm').textContent = '0';
+  document.getElementById('typing-live-accuracy').textContent = '100%';
+  renderTypingPassage();
+  showView('typing-active-view');
+  setTimeout(()=>document.getElementById('typing-input').focus(), 50);
+}
+document.getElementById('typing-start-btn').addEventListener('click', startTypingTest);
+document.getElementById('typing-input').addEventListener('input', (e)=>{
+  if(!typingState.startTime){ typingState.startTime = Date.now(); startTypingTimer(); }
+  typingState.typed = e.target.value;
+  if(typingState.typed.length >= typingState.text.length - 80){
+    typingState.text += ' ' + buildTypingPassage(typingLevel, 1200);
+  }
+  renderTypingPassage();
+  updateLiveTypingStats();
+});
+document.getElementById('typing-quit-btn').addEventListener('click', ()=>{
+  if(typingState.intervalId) clearInterval(typingState.intervalId);
+  if(confirm('Quit this typing test?')) switchTab('typing');
+});
+function endTypingTest(){
+  const correctChars = countCorrectChars();
+  const totalTyped = typingState.typed.length;
+  const elapsedMin = typingState.duration/60;
+  const wpm = Math.round((correctChars/5)/elapsedMin);
+  const accuracy = totalTyped>0 ? Math.round((correctChars/totalTyped)*100) : 100;
+  const errors = totalTyped-correctChars;
+
+  document.getElementById('typing-final-wpm').textContent = wpm;
+  let band, color, glowClass;
+  if(wpm>=60){ band='Excellent speed'; color='var(--good)'; glowClass='glow-good'; }
+  else if(wpm>=40){ band='Great pace'; color='var(--good)'; glowClass='glow-good'; }
+  else if(wpm>=20){ band='Good progress'; color='var(--amber-dark)'; glowClass='glow-amber'; }
+  else { band='Keep practising'; color='var(--bad)'; glowClass='glow-bad'; }
+  const bandEl = document.getElementById('typing-final-band');
+  bandEl.textContent = `${band} — ${wpm} WPM`;
+  bandEl.style.color = color;
+  document.getElementById('typing-final-sub').textContent = `${accuracy}% accuracy over ${typingState.duration} seconds`;
+  const heroEl = document.getElementById('typing-results-hero');
+  heroEl.classList.remove('glow-good','glow-amber','glow-bad');
+  heroEl.classList.add(glowClass);
+  document.getElementById('typing-result-accuracy').textContent = accuracy+'%';
+  document.getElementById('typing-result-chars').textContent = totalTyped;
+  document.getElementById('typing-result-errors').textContent = errors;
+  showView('typing-results-view');
+}
+document.getElementById('typing-retry-btn').addEventListener('click', startTypingTest);
+document.getElementById('typing-home-btn').addEventListener('click', ()=>switchTab('typing'));
+
 function showNaplanResults(){
   const total = state.questions.length;
   const correct = state.answers.filter(a=>a.isCorrect).length;
@@ -3192,39 +3421,54 @@ async function fetchWordAudioUrl(word){
   }
 }
 
+let speechRequestId = 0;
 function speakWithBrowserTTS(textInput){
   if(!('speechSynthesis' in window)) return;
   const text = (textInput && typeof textInput === 'object' && 'w' in textInput) ? String(textInput.w) : String(textInput);
+  const myId = ++speechRequestId;
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  if(selectedVoice){ utter.voice = selectedVoice; utter.lang = selectedVoice.lang; }
-  else { utter.lang = 'en-AU'; }
-  utter.rate = selectedRate;
-  window.speechSynthesis.speak(utter);
+  // Browsers don't always finish cancelling the previous utterance before a same-tick
+  // speak() call is queued — this can make the OLD word's audio play instead of (or on
+  // top of) the new one. A short delay, plus checking we're still the latest request,
+  // eliminates that overlap/stale-utterance race entirely.
+  setTimeout(()=>{
+    if(myId !== speechRequestId) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    if(selectedVoice){ utter.voice = selectedVoice; utter.lang = selectedVoice.lang; }
+    else { utter.lang = 'en-AU'; }
+    utter.rate = selectedRate;
+    window.speechSynthesis.speak(utter);
+  }, 60);
 }
 
-async function speakWord(wordInput){
+function speakWord(wordInput){
   // Defensive: always coerce to a plain string, so a stray object reference
   // (e.g. a {w, def} pair passed by mistake) can never end up spoken as "[object Object]".
   const word = (wordInput && typeof wordInput === 'object' && 'w' in wordInput) ? String(wordInput.w) : String(wordInput);
 
+  speechRequestId++; // invalidate any TTS from a previous word that hasn't fired yet
   if(currentWordAudio){ try{ currentWordAudio.pause(); }catch(e){} currentWordAudio = null; }
-  if('speechSynthesis' in window) window.speechSynthesis.cancel();
 
-  const isSingleWord = /^[a-zA-Z]+$/.test(word.trim());
-  if(isSingleWord){
-    const url = await fetchWordAudioUrl(word);
-    if(url){
-      try {
-        const audio = new Audio(url);
-        audio.playbackRate = selectedRate <= 0.75 ? 0.75 : 1; // only slow down real recordings if "Slow" is chosen
-        currentWordAudio = audio;
-        await audio.play();
-        return;
-      } catch(e){ /* fall through to browser voice below */ }
-    }
+  const key = word.toLowerCase();
+  const cachedUrl = wordAudioCache[key];
+  if(cachedUrl){
+    try {
+      if('speechSynthesis' in window) window.speechSynthesis.cancel();
+      const audio = new Audio(cachedUrl);
+      audio.playbackRate = selectedRate <= 0.75 ? 0.75 : 1; // only slow down real recordings if "Slow" is chosen
+      currentWordAudio = audio;
+      audio.play().catch(()=>{ speakWithBrowserTTS(word); });
+      return;
+    } catch(e){ /* fall through to browser voice below */ }
   }
+  // No cached recording ready yet (still fetching in the background, offline, or none exists).
+  // Speak immediately with the browser voice — this call happens synchronously in direct
+  // response to the user's action, so it isn't blocked by browsers' autoplay/gesture policies
+  // the way an audio call *after* an awaited network request can be.
   speakWithBrowserTTS(word);
+  if(/^[a-zA-Z]+$/.test(word.trim()) && !(key in wordAudioCache)){
+    fetchWordAudioUrl(word); // fire-and-forget; warms the cache for the next replay
+  }
 }
 
 function sbCurrentWord(){ return sbState.words[sbState.index]; }
@@ -3247,6 +3491,9 @@ function startSpellingBee(){
   sbSummary.style.display='none';
   sbActive.style.display='block';
   sbLiveScore.textContent = `Correct: 0 / ${sbState.words.length}`;
+  // Prefetch every word's real-recording audio up front (fire-and-forget) so playback
+  // during the round is always instant, cached, and safe under autoplay policies.
+  sbState.words.forEach(w=>fetchWordAudioUrl(w.w));
   sbShowWord();
 }
 
@@ -3584,19 +3831,21 @@ function showView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   const tabBar = document.getElementById('tab-bar');
-  tabBar.style.display = (id==='test-view' || id==='warmup-view' || id==='history-detail-view') ? 'none' : 'flex';
+  tabBar.style.display = (id==='test-view' || id==='warmup-view' || id==='history-detail-view' || id==='typing-active-view') ? 'none' : 'flex';
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
 /* ============================= HISTORY TAB ============================= */
 const tabPracticeBtn = document.getElementById('tab-practice-btn');
 const tabNaplanBtn = document.getElementById('tab-naplan-btn');
+const tabTypingBtn = document.getElementById('tab-typing-btn');
 const tabHistoryBtn = document.getElementById('tab-history-btn');
 let historyFilters = { student:'all' };
 
 function switchTab(tab){
   tabPracticeBtn.classList.remove('selected');
   tabNaplanBtn.classList.remove('selected');
+  tabTypingBtn.classList.remove('selected');
   tabHistoryBtn.classList.remove('selected');
   if(tab==='history'){
     tabHistoryBtn.classList.add('selected');
@@ -3605,6 +3854,9 @@ function switchTab(tab){
   } else if(tab==='naplan'){
     tabNaplanBtn.classList.add('selected');
     showView('naplan-home-view');
+  } else if(tab==='typing'){
+    tabTypingBtn.classList.add('selected');
+    showView('typing-home-view');
   } else {
     tabPracticeBtn.classList.add('selected');
     showView('home-view');
@@ -3612,6 +3864,7 @@ function switchTab(tab){
 }
 tabPracticeBtn.addEventListener('click', ()=>switchTab('practice'));
 tabNaplanBtn.addEventListener('click', ()=>switchTab('naplan'));
+tabTypingBtn.addEventListener('click', ()=>switchTab('typing'));
 tabHistoryBtn.addEventListener('click', ()=>switchTab('history'));
 
 function renderStudentFilterRow(all){
