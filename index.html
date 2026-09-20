@@ -627,9 +627,9 @@
     <div class="card">
       <p class="section-label">05 — Test length</p>
       <div class="pill-row" id="length-row">
-        <button class="pill selected" data-length="20">20 questions</button>
-        <button class="pill" data-length="25">25 questions</button>
-        <button class="pill" data-length="30">30 questions</button>
+        <button class="pill selected" data-length="30">30 questions</button>
+        <button class="pill" data-length="40">40 questions</button>
+        <button class="pill" data-length="50">50 questions</button>
       </div>
     </div>
 
@@ -903,6 +903,10 @@
         <p class="section-label">⏱️ Warm-up history <span class="section-sublabel">(separate from graded tests)</span></p>
         <div id="history-maths-warmup-log"></div>
       </div>
+      <div class="card" id="history-maths-naplan-card">
+        <p class="section-label">📝 NAPLAN history <span class="section-sublabel">(separate from graded tests)</span></p>
+        <div id="history-maths-naplan-log"></div>
+      </div>
       <div class="card">
         <p class="section-label">Correct vs incorrect over time, with accuracy trend</p>
         <div id="history-maths-chart-container"></div>
@@ -929,6 +933,10 @@
         <p class="section-label">⏱️ Warm-up history <span class="section-sublabel">(separate from graded tests)</span></p>
         <div id="history-english-warmup-log"></div>
       </div>
+      <div class="card" id="history-english-naplan-card">
+        <p class="section-label">📝 NAPLAN history <span class="section-sublabel">(separate from graded tests)</span></p>
+        <div id="history-english-naplan-log"></div>
+      </div>
       <div class="card">
         <p class="section-label">Correct vs incorrect over time, with accuracy trend</p>
         <div id="history-english-chart-container"></div>
@@ -941,6 +949,15 @@
       <div class="card">
         <p class="section-label">Test log <span class="section-sublabel">(tap any test to review it)</span></p>
         <div id="history-english-log"></div>
+      </div>
+    </div>
+
+    <div class="subject-history-block" id="history-typing-block">
+      <div class="subject-history-heading" style="color:var(--ink);"><span>⌨️</span> Typing History</div>
+      <div id="history-typing-summary-cards" class="history-summary-row"></div>
+      <div class="card">
+        <p class="section-label">Session log</p>
+        <div id="history-typing-log"></div>
       </div>
     </div>
   </div>
@@ -1210,6 +1227,63 @@ M7.statistics = (diff) => {
   return numQ('Statistics','advanced', `Find the range of: ${nums.join(', ')}`, range, {explanation:`Range = max − min = ${Math.max(...nums)} − ${Math.min(...nums)} = ${range}`});
 };
 
+M7.indicesIntro = (diff) => {
+  if(diff==='basic'){
+    const base=rnd(2,9), exp=pick([2,3]);
+    const ans = Math.pow(base,exp);
+    return numQ('Indices','basic', `Evaluate: ${base}${exp===2?'²':'³'}`, ans, {explanation:`${base}${exp===2?'²':'³'} = ${Array(exp).fill(base).join('×')} = ${ans}`});
+  }
+  if(diff==='intermediate'){
+    const base=rnd(2,6), exp=rnd(2,4);
+    const correct = `${base}^${exp}`;
+    const repeated = Array(exp).fill(base).join('×');
+    const distractors = uniqueStrOptions(correct, [`${base}×${exp}`, `${base*exp}`, `${exp}^${base}`], i=>`${base}^${exp+i+1}`);
+    return mcqQ('Indices','intermediate', `Write ${repeated} using index notation.`, correct, distractors, `${repeated} means ${base} multiplied by itself ${exp} times = ${base}^${exp}`);
+  }
+  const base=pick([2,3,5]), e1=rnd(2,3), e2=rnd(2,3);
+  const ans = Math.pow(base,e1+e2);
+  return numQ('Indices','advanced', `Evaluate: ${base}^${e1} × ${base}^${e2}`, ans, {explanation:`${base}^${e1}×${base}^${e2} = ${base}^${e1+e2} = ${ans}`});
+};
+
+M7.coordinates = (diff) => {
+  if(diff==='basic'){
+    let x=rnd(-8,8); if(x===0) x=3;
+    let y=rnd(-8,8); if(y===0) y=3;
+    let quadrant;
+    if(x>0&&y>0) quadrant='1st quadrant';
+    else if(x<0&&y>0) quadrant='2nd quadrant';
+    else if(x<0&&y<0) quadrant='3rd quadrant';
+    else quadrant='4th quadrant';
+    const distractors = ['1st quadrant','2nd quadrant','3rd quadrant','4th quadrant'].filter(q=>q!==quadrant);
+    return mcqQ('Coordinates','basic', `Which quadrant is the point (${x}, ${y}) in?`, quadrant, distractors, `${x>0?'x is positive':'x is negative'} and ${y>0?'y is positive':'y is negative'}, so it's in the ${quadrant}.`);
+  }
+  if(diff==='intermediate'){
+    const x=rnd(-6,6), y=rnd(-6,6), dx=rnd(1,5)*pick([1,-1]), dy=rnd(1,5)*pick([1,-1]);
+    const correct = `(${x+dx}, ${y+dy})`;
+    const distractors = uniqueStrOptions(correct, [`(${x-dx}, ${y+dy})`, `(${x+dx}, ${y-dy})`, `(${x}, ${y})`], i=>`(${x+dx+i+1}, ${y+dy})`);
+    return mcqQ('Coordinates','intermediate', `A point starts at (${x}, ${y}) and moves ${Math.abs(dx)} units ${dx>=0?'right':'left'} and ${Math.abs(dy)} units ${dy>=0?'up':'down'}. What are its new coordinates?`, correct, distractors, `(${x}${dx>=0?'+':''}${dx}, ${y}${dy>=0?'+':''}${dy}) = (${x+dx}, ${y+dy})`);
+  }
+  const x1=rnd(-10,10), y1=rnd(-10,10), x2=rnd(-10,10), y2=rnd(-10,10);
+  const mx=round1((x1+x2)/2), my=round1((y1+y2)/2);
+  const correct = `(${mx}, ${my})`;
+  const distractors = uniqueStrOptions(correct, [`(${x1+x2}, ${y1+y2})`, `(${mx+1}, ${my})`, `(${mx}, ${my+1})`], i=>`(${mx+i+2}, ${my})`);
+  return mcqQ('Coordinates','advanced', `Find the midpoint of (${x1}, ${y1}) and (${x2}, ${y2}).`, correct, distractors, `Midpoint = ((${x1}+${x2})/2, (${y1}+${y2})/2) = (${mx}, ${my})`);
+};
+
+M7.volume = (diff) => {
+  if(diff==='basic'){
+    const l=rnd(2,10), w=rnd(2,10), h=rnd(2,10);
+    return numQ('Volume','basic', `Find the volume of a rectangular prism ${l}cm × ${w}cm × ${h}cm.`, l*w*h, {unit:'cm³', explanation:`V = l×w×h = ${l}×${w}×${h} = ${l*w*h} cm³`});
+  }
+  if(diff==='intermediate'){
+    const s=rnd(2,12);
+    return numQ('Volume','intermediate', `Find the volume of a cube with side length ${s}cm.`, s*s*s, {unit:'cm³', explanation:`V = s³ = ${s}³ = ${s*s*s} cm³`});
+  }
+  const l=rnd(3,10), w=rnd(3,10), hFactor=rnd(2,8);
+  const vol = l*w*hFactor;
+  return numQ('Volume','advanced', `A rectangular prism has volume ${vol}cm³, length ${l}cm and width ${w}cm. Find its height.`, hFactor, {unit:'cm', explanation:`h = V/(l×w) = ${vol}/(${l}×${w}) = ${hFactor}cm`});
+};
+
 const MATHS7_TOPICS = [
   {key:'integers', label:'Integers', gen:M7.integers},
   {key:'fdp', label:'Fractions, Decimals & Percentages', gen:M7.fdp},
@@ -1220,6 +1294,9 @@ const MATHS7_TOPICS = [
   {key:'perimeterArea', label:'Perimeter & Area', gen:M7.perimeterArea},
   {key:'probability', label:'Probability', gen:M7.probability},
   {key:'statistics', label:'Statistics', gen:M7.statistics},
+  {key:'indicesIntro', label:'Indices', gen:M7.indicesIntro},
+  {key:'coordinates', label:'Coordinates', gen:M7.coordinates},
+  {key:'volume7', label:'Volume', gen:M7.volume},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 9 ============================= */
@@ -1388,6 +1465,62 @@ M9.financial = (diff) => {
   return numQ('Financial Mathematics','advanced', `An item costs $${excl} excluding 10% GST. What is the price including GST?`, incl, {tolerance:0.05, unit:'$', explanation:`Price incl. GST = ${excl} × 1.10 = $${incl}`});
 };
 
+M9.scientificNotation = (diff) => {
+  if(diff==='basic'){
+    const mantissa=rnd(1,9), exp=rnd(2,6);
+    const numStr = mantissa + '0'.repeat(exp);
+    return numQ('Scientific Notation','basic', `The number ${numStr} is written in scientific notation as ${mantissa}×10^n. What is n?`, exp, {explanation:`${numStr} = ${mantissa}×10^${exp}, so n = ${exp}`});
+  }
+  if(diff==='intermediate'){
+    const digits = rnd(2,5);
+    const mantissaDigit = rnd(1,9);
+    const exp = -digits;
+    const decimalStr = '0.' + '0'.repeat(digits-1) + mantissaDigit;
+    return numQ('Scientific Notation','intermediate', `Write ${decimalStr} in scientific notation as a×10^n (with 1≤a<10). What is n?`, exp, {explanation:`${decimalStr} = ${mantissaDigit}×10^${exp}, so n = ${exp}`});
+  }
+  const e1=rnd(2,6), e2=rnd(1,4);
+  return numQ('Scientific Notation','advanced', `Simplify: 10^${e1} × 10^${e2}. Give your answer as the power of 10 (just the exponent).`, e1+e2, {explanation:`When multiplying powers of the same base, add the exponents: ${e1}+${e2} = ${e1+e2}`});
+};
+
+M9.simultaneousIntro = (diff) => {
+  if(diff==='basic'){
+    const x=rnd(1,10), y=rnd(1,10);
+    const s1=x+y, s2=x-y;
+    return numQ('Simultaneous Equations','basic', `Solve: x + y = ${s1} and x − y = ${s2}. Find x.`, x, {explanation:`Adding the equations: 2x = ${s1+s2}, so x = ${x}`});
+  }
+  if(diff==='intermediate'){
+    const x=rnd(1,8), y=rnd(1,8);
+    const s1=x+y, s2=x-y;
+    return numQ('Simultaneous Equations','intermediate', `Solve: x + y = ${s1} and x − y = ${s2}. Find y.`, y, {explanation:`Subtracting: 2y = ${s1-s2}, so y = ${y}`});
+  }
+  const x=rnd(1,8), y=rnd(1,8), a=rnd(2,4);
+  const eq1 = x+y;
+  const eq2 = a*x+y;
+  return numQ('Simultaneous Equations','advanced', `Solve: x + y = ${eq1} and ${a}x + y = ${eq2}. Find x.`, x, {explanation:`Subtract the first equation from the second: ${a-1}x = ${eq2-eq1}, so x = ${x}`});
+};
+
+M9.similarityCongruence = (diff) => {
+  if(diff==='basic'){
+    const tests = ['SSS','SAS','AAS','RHS'];
+    const descMap = {
+      'SSS':'All three pairs of corresponding sides are equal.',
+      'SAS':'Two pairs of sides and the included angle are equal.',
+      'AAS':'Two angles and a non-included side are equal.',
+      'RHS':'The hypotenuse and one other side of two right-angled triangles are equal.'
+    };
+    const correct = pick(tests);
+    return mcqQ('Similarity & Congruence','basic', `Which congruence test matches this description?\n"${descMap[correct]}"`, correct, tests.filter(t=>t!==correct), `This describes the ${correct} congruence test.`);
+  }
+  if(diff==='intermediate'){
+    const scale=pick([2,3,1.5,0.5]), side=rnd(3,12);
+    const ans = round1(side*scale);
+    return numQ('Similarity & Congruence','intermediate', `Two similar triangles have a scale factor of ${scale}. If a side on the smaller triangle is ${side}cm, find the corresponding side on the larger triangle.`, ans, {tolerance:0.1, unit:'cm', explanation:`${side}×${scale} = ${ans}cm`});
+  }
+  const areaA=rnd(4,15)*rnd(4,15), scale=pick([2,3,0.5]);
+  const areaB = round1(areaA*scale*scale);
+  return numQ('Similarity & Congruence','advanced', `Shape B is similar to Shape A with a linear scale factor of ${scale}. Shape A has an area of ${areaA}cm². Find the area of Shape B.`, areaB, {tolerance:1, unit:'cm²', explanation:`Area scale factor = (linear scale)² = ${scale}² = ${scale*scale}. New area = ${areaA}×${scale*scale} = ${areaB}cm²`});
+};
+
 const MATHS9_TOPICS = [
   {key:'algebra', label:'Algebra: Expand & Factorise', gen:M9.algebra},
   {key:'linear', label:'Linear Equations & Graphs', gen:M9.linear},
@@ -1398,6 +1531,9 @@ const MATHS9_TOPICS = [
   {key:'probabilityY9', label:'Probability', gen:M9.probabilityY9},
   {key:'statisticsY9', label:'Statistics', gen:M9.statisticsY9},
   {key:'financial', label:'Financial Mathematics', gen:M9.financial},
+  {key:'scientificNotation9', label:'Scientific Notation', gen:M9.scientificNotation},
+  {key:'simultaneousIntro9', label:'Simultaneous Equations', gen:M9.simultaneousIntro},
+  {key:'similarityCongruence9', label:'Similarity & Congruence', gen:M9.similarityCongruence},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 8 ============================= */
@@ -1529,6 +1665,91 @@ M8.probabilityStats = (diff) => {
   return numQ('Probability & Statistics','advanced', `Two independent events have probability ${p1} and ${p2}. Find P(both occur), as a decimal (2dp).`, ans, {tolerance:0.01, explanation:`P(A and B) = ${p1}×${p2} = ${ans}`});
 };
 
+M8.pythagorasIntro = (diff) => {
+  const triples=[[3,4,5],[5,12,13],[6,8,10],[8,15,17],[9,12,15]];
+  if(diff==='basic'){
+    const t=pick(triples);
+    const [a,b,c]=t;
+    return numQ("Pythagoras' Theorem",'basic', `A right-angled triangle has legs ${a}cm and ${b}cm. Find the length of the hypotenuse.`, c, {explanation:`c² = ${a}² + ${b}² = ${a*a} + ${b*b} = ${a*a+b*b}, so c = ${c}cm`});
+  }
+  if(diff==='intermediate'){
+    const t=pick(triples), k=rnd(2,3);
+    const [a,b,c]=t.map(v=>v*k);
+    return numQ("Pythagoras' Theorem",'intermediate', `A right-angled triangle has legs ${a}cm and ${b}cm. Find the hypotenuse.`, c, {explanation:`c² = ${a}²+${b}² = ${a*a+b*b}, so c = ${c}cm`});
+  }
+  const t=pick(triples), k=rnd(1,3);
+  const [a,b,c]=t.map(v=>v*k);
+  return numQ("Pythagoras' Theorem",'advanced', `A right-angled triangle has hypotenuse ${c}cm and one leg ${a}cm. Find the other leg.`, b, {explanation:`b² = ${c}²−${a}² = ${c*c-a*a}, so b = ${b}cm`});
+};
+
+M8.linearRelationships = (diff) => {
+  if(diff==='basic'){
+    const m=rnd(1,5), c=rnd(-5,5), x=rnd(-5,5);
+    const y = m*x+c;
+    return numQ('Linear Relationships & Graphs','basic', `For the rule y = ${m}x ${c>=0?'+ '+c:'- '+Math.abs(c)}, find y when x = ${x}.`, y, {explanation:`y = ${m}×(${x}) ${c>=0?'+':''}${c} = ${y}`});
+  }
+  if(diff==='intermediate'){
+    const x1=rnd(-6,6); let x2=rnd(-6,6); while(x2===x1) x2=rnd(-6,6);
+    const y1=rnd(-6,6), y2=rnd(-6,6);
+    const gradient = round2((y2-y1)/(x2-x1));
+    return numQ('Linear Relationships & Graphs','intermediate', `Find the gradient of the line through (${x1}, ${y1}) and (${x2}, ${y2}).`, gradient, {tolerance:0.01, explanation:`m = (y2-y1)/(x2-x1) = (${y2}-${y1})/(${x2}-${x1}) = ${gradient}`});
+  }
+  const m=rnd(1,6), x1=rnd(-5,5), y1=rnd(-5,5);
+  const c = y1-m*x1;
+  return numQ('Linear Relationships & Graphs','advanced', `A line has gradient ${m} and passes through (${x1}, ${y1}). Find its y-intercept (the value of c in y=mx+c).`, c, {explanation:`c = y − mx = ${y1} − ${m}×(${x1}) = ${c}`});
+};
+
+M8.transformations = (diff) => {
+  if(diff==='basic'){
+    const x=rnd(1,8), y=rnd(1,8);
+    const axis = pick(['x-axis','y-axis']);
+    const correct = axis==='x-axis' ? `(${x}, ${-y})` : `(${-x}, ${y})`;
+    const distractors = uniqueStrOptions(correct, [`(${-x}, ${-y})`, `(${x}, ${y})`, axis==='x-axis'?`(${-x}, ${y})`:`(${x}, ${-y})`], i=>`(${x+i+1}, ${y})`);
+    return mcqQ('Transformations','basic', `Reflect the point (${x}, ${y}) across the ${axis}. What are the new coordinates?`, correct, distractors, `Reflecting across the ${axis} ${axis==='x-axis'?'flips the sign of the y-coordinate':'flips the sign of the x-coordinate'}: ${correct}`);
+  }
+  if(diff==='intermediate'){
+    const x=rnd(-6,6), y=rnd(-6,6), dx=rnd(1,6)*pick([1,-1]), dy=rnd(1,6)*pick([1,-1]);
+    const correct = `(${x+dx}, ${y+dy})`;
+    const distractors = uniqueStrOptions(correct, [`(${x-dx}, ${y-dy})`, `(${x+dx}, ${y-dy})`, `(${x-dx}, ${y+dy})`], i=>`(${x+dx+i+1}, ${y+dy})`);
+    return mcqQ('Transformations','intermediate', `Translate the point (${x}, ${y}) by ${Math.abs(dx)} units ${dx>=0?'right':'left'} and ${Math.abs(dy)} units ${dy>=0?'up':'down'}. Find the new coordinates.`, correct, distractors, `(${x}${dx>=0?'+':''}${dx}, ${y}${dy>=0?'+':''}${dy}) = ${correct}`);
+  }
+  const x=rnd(1,8), y=rnd(1,8);
+  const correct = `(${-x}, ${-y})`;
+  const distractors = uniqueStrOptions(correct, [`(${-y}, ${x})`, `(${y}, ${-x})`, `(${x}, ${y})`], i=>`(${-x+i+1}, ${-y})`);
+  return mcqQ('Transformations','advanced', `Rotate the point (${x}, ${y}) by 180° about the origin. Find the new coordinates.`, correct, distractors, `A 180° rotation about the origin maps (x,y) to (−x,−y): ${correct}`);
+};
+
+M8.circles = (diff) => {
+  if(diff==='basic'){
+    const r=rnd(2,15);
+    const circ = round1(2*Math.PI*r);
+    return numQ('Circumference & Area of Circles','basic', `Find the circumference of a circle with radius ${r}cm (1dp, use π≈3.14).`, circ, {tolerance:0.3, unit:'cm', explanation:`C = 2πr = 2×3.14×${r} ≈ ${circ}cm`});
+  }
+  if(diff==='intermediate'){
+    const r=rnd(2,15);
+    const area = round1(Math.PI*r*r);
+    return numQ('Circumference & Area of Circles','intermediate', `Find the area of a circle with radius ${r}cm (1dp, use π≈3.14).`, area, {tolerance:0.5, unit:'cm²', explanation:`A = πr² ≈ 3.14×${r}² ≈ ${area}cm²`});
+  }
+  const d=rnd(6,30);
+  const circ = round1(Math.PI*d);
+  return numQ('Circumference & Area of Circles','advanced', `A circle has diameter ${d}cm. Find its circumference (1dp, use π≈3.14).`, circ, {tolerance:0.3, unit:'cm', explanation:`C = πd = 3.14×${d} ≈ ${circ}cm`});
+};
+
+M8.surfaceAreaVolume = (diff) => {
+  if(diff==='basic'){
+    const l=rnd(2,10), w=rnd(2,10), h=rnd(2,10);
+    return numQ('Surface Area & Volume','basic', `Find the volume of a rectangular prism ${l}cm × ${w}cm × ${h}cm.`, l*w*h, {unit:'cm³', explanation:`V = l×w×h = ${l*w*h}cm³`});
+  }
+  if(diff==='intermediate'){
+    const l=rnd(2,10), w=rnd(2,10), h=rnd(2,10);
+    const sa = 2*(l*w+l*h+w*h);
+    return numQ('Surface Area & Volume','intermediate', `Find the surface area of a rectangular prism ${l}cm × ${w}cm × ${h}cm.`, sa, {unit:'cm²', explanation:`SA = 2(lw+lh+wh) = 2(${l*w}+${l*h}+${w*h}) = ${sa}cm²`});
+  }
+  const s=rnd(2,12);
+  const sa = 6*s*s;
+  return numQ('Surface Area & Volume','advanced', `Find the surface area of a cube with side length ${s}cm.`, sa, {unit:'cm²', explanation:`SA = 6s² = 6×${s}² = ${sa}cm²`});
+};
+
 const MATHS8_TOPICS = [
   {key:'directedNumbers', label:'Directed Numbers', gen:M8.directedNumbers},
   {key:'algebraicTechniques', label:'Algebraic Techniques', gen:M8.algebraicTechniques},
@@ -1537,6 +1758,11 @@ const MATHS8_TOPICS = [
   {key:'percentagesRates', label:'Percentages & Rates', gen:M8.percentagesRates},
   {key:'measurementGeometry', label:'Measurement & Geometry', gen:M8.measurementGeometry},
   {key:'probabilityStats8', label:'Probability & Statistics', gen:M8.probabilityStats},
+  {key:'pythagorasIntro', label:"Pythagoras' Theorem", gen:M8.pythagorasIntro},
+  {key:'linearRelationships8', label:'Linear Relationships & Graphs', gen:M8.linearRelationships},
+  {key:'transformations8', label:'Transformations', gen:M8.transformations},
+  {key:'circles8', label:'Circumference & Area of Circles', gen:M8.circles},
+  {key:'surfaceAreaVolume8', label:'Surface Area & Volume', gen:M8.surfaceAreaVolume},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 10 ============================= */
@@ -1656,6 +1882,106 @@ M10.financialY10 = (diff) => {
   return numQ('Financial Mathematics','advanced', `A car worth $${V} depreciates at ${r}% p.a. Find its value after ${n} years (2dp).`, value, {tolerance:2, unit:'$', explanation:`Value = V(1-r/100)^n = ${V}(1-${r}/100)^${n} ≈ $${value}`});
 };
 
+M10.probabilityStats10 = (diff) => {
+  if(diff==='basic'){
+    const total=rnd(4,4), rowA=rnd(2,3);
+    const a=rnd(3,10), b=rnd(3,10), c=rnd(3,10);
+    const grand = a+b+c;
+    return numQ('Probability & Statistics','basic', `A two-way table shows: Group X has ${a} people, Group Y has ${b} people, Group Z has ${c} people. Find the total number of people.`, grand, {explanation:`${a}+${b}+${c} = ${grand}`});
+  }
+  if(diff==='intermediate'){
+    const nums=Array.from({length:7},()=>rnd(5,50)).sort((a,b)=>a-b);
+    const median = nums[3];
+    const q1 = nums[1], q3=nums[5];
+    const iqr = q3-q1;
+    return numQ('Probability & Statistics','intermediate', `Find the interquartile range (Q3 − Q1) of: ${nums.join(', ')}`, iqr, {explanation:`Sorted data: ${nums.join(', ')}. Q1=${q1}, Q3=${q3}, IQR = ${q3}−${q1} = ${iqr}`});
+  }
+  const total=rnd(12,20), favA=rnd(3,total-3);
+  const pA = round2(favA/total);
+  const pB = round2((favA-1)/(total-1));
+  const ans = round2(pA*pB);
+  return numQ('Probability & Statistics','advanced', `A bag has ${favA} red counters out of ${total}. Two are drawn without replacement. Find P(both red), as a decimal (2dp).`, ans, {tolerance:0.01, explanation:`P = (${favA}/${total})×(${favA-1}/${total-1}) ≈ ${ans}`});
+};
+
+M10.functionsGraphs = (diff) => {
+  if(diff==='basic'){
+    const a=rnd(1,5), b=rnd(-5,5), x=rnd(-5,5);
+    const y = a*x+b;
+    return numQ('Functions & Graphs','basic', `For f(x) = ${a}x ${b>=0?'+ '+b:'- '+Math.abs(b)}, find f(${x}).`, y, {explanation:`f(${x}) = ${a}×(${x}) ${b>=0?'+':''}${b} = ${y}`});
+  }
+  if(diff==='intermediate'){
+    const a=rnd(1,4), b=rnd(-6,6), c=rnd(-6,6), x=rnd(-4,4);
+    const y = a*x*x+b*x+c;
+    return numQ('Functions & Graphs','intermediate', `For f(x) = ${a}x² ${b>=0?'+ '+b:'- '+Math.abs(b)}x ${c>=0?'+ '+c:'- '+Math.abs(c)}, find f(${x}).`, y, {explanation:`f(${x}) = ${a}(${x})² ${b>=0?'+':''}${b}(${x}) ${c>=0?'+':''}${c} = ${y}`});
+  }
+  const a=rnd(1,4), b=rnd(-10,10)||2;
+  const vertexX = round2(-b/(2*a));
+  return numQ('Functions & Graphs','advanced', `For f(x) = ${a}x² ${b>=0?'+ '+b:'- '+Math.abs(b)}x, find the x-coordinate of the turning point, using x = −b/(2a).`, vertexX, {tolerance:0.01, explanation:`x = −(${b})/(2×${a}) = ${vertexX}`});
+};
+
+M10.nonLinear = (diff) => {
+  if(diff==='basic'){
+    const a=pick([2,3]), x=rnd(1,5);
+    const y=Math.pow(a,x);
+    return numQ('Non-linear Relationships','basic', `For y = ${a}^x, find y when x = ${x}.`, y, {explanation:`y = ${a}^${x} = ${y}`});
+  }
+  if(diff==='intermediate'){
+    const x=rnd(2,10), y=rnd(2,10);
+    const k = x*y;
+    return numQ('Non-linear Relationships','intermediate', `For the inverse relationship xy = ${k}, find y when x = ${x}.`, y, {explanation:`y = ${k}/${x} = ${y}`});
+  }
+  const a=rnd(1,4), x=rnd(-5,5);
+  const y = a*x*x;
+  return numQ('Non-linear Relationships','advanced', `For y = ${a}x², find y when x = ${x}.`, y, {explanation:`y = ${a}×(${x})² = ${y}`});
+};
+
+M10.geometricProof = (diff) => {
+  if(diff==='basic'){
+    const a=rnd(40,140);
+    return numQ('Geometric Proof','basic', `Two parallel lines are cut by a transversal. One co-interior angle is ${a}°. Find the other co-interior angle (co-interior angles are supplementary).`, 180-a, {explanation:`Co-interior angles sum to 180°: 180−${a} = ${180-a}°`});
+  }
+  if(diff==='intermediate'){
+    const a=rnd(30,100), b=rnd(30,100);
+    const ext = a+b;
+    return numQ('Geometric Proof','intermediate', `In a triangle, two interior angles are ${a}° and ${b}°. Find the exterior angle at the third vertex (the exterior angle equals the sum of the two remote interior angles).`, ext, {explanation:`Exterior angle = ${a}+${b} = ${ext}° (exterior angle theorem)`});
+  }
+  const n=pick([5,6,7,8,9]);
+  const sum=(n-2)*180;
+  return numQ('Geometric Proof','advanced', `Find the sum of interior angles of a ${n}-sided polygon by splitting it into triangles from one vertex (n−2 triangles, each summing to 180°).`, sum, {explanation:`A ${n}-gon splits into ${n-2} triangles: (${n}−2)×180 = ${sum}°`});
+};
+
+M10.ratesOfChange = (diff) => {
+  if(diff==='basic'){
+    const distance=rnd(60,400), time=pick([2,3,4,5,8]);
+    const speed = round1(distance/time);
+    return numQ('Rates of Change','basic', `A car travels ${distance}km in ${time} hours. Find its average speed.`, speed, {tolerance:0.1, unit:'km/h', explanation:`Speed = distance/time = ${distance}/${time} = ${speed}km/h`});
+  }
+  if(diff==='intermediate'){
+    const x1=rnd(0,10), y1=rnd(0,50), x2=rnd(11,20), y2=rnd(51,100);
+    const rate = round2((y2-y1)/(x2-x1));
+    return numQ('Rates of Change','intermediate', `A tank's water level was ${y1}L at ${x1} minutes and ${y2}L at ${x2} minutes. Find the average rate of change, in litres per minute.`, rate, {tolerance:0.05, unit:'L/min', explanation:`Rate = (${y2}−${y1})/(${x2}−${x1}) = ${rate}L/min`});
+  }
+  const initial=rnd(500,2000), rate=pick([20,30,50,40]), time=rnd(3,10);
+  const final = initial - rate*time;
+  return numQ('Rates of Change','advanced', `A tank starts with ${initial}L and drains at a constant rate of ${rate}L/min. Find the volume remaining after ${time} minutes.`, final, {unit:'L', explanation:`${initial} − ${rate}×${time} = ${final}L`});
+};
+
+M10.networks = (diff) => {
+  if(diff==='basic'){
+    const edges=rnd(4,15);
+    return numQ('Networks','basic', `A network has ${edges} edges. Find the sum of the degrees of all its vertices (sum of degrees = 2 × number of edges — the Handshake Lemma).`, edges*2, {explanation:`Sum of degrees = 2×${edges} = ${edges*2}`});
+  }
+  if(diff==='intermediate'){
+    let d = [rnd(1,4),rnd(1,4),rnd(1,4),rnd(1,4)];
+    let sum = d.reduce((a,b)=>a+b,0);
+    if(sum%2!==0){ d[3]++; sum++; }
+    return numQ('Networks','intermediate', `A network has vertices with degrees ${d.join(', ')}. Find the number of edges (edges = sum of degrees ÷ 2).`, sum/2, {explanation:`Sum of degrees = ${sum}, so edges = ${sum}/2 = ${sum/2}`});
+  }
+  const vertices=rnd(5,10);
+  const edges = vertices-1;
+  return numQ('Networks','advanced', `A connected network with no cycles (a "tree") has ${vertices} vertices. Find the number of edges (a tree always has vertices − 1 edges).`, edges, {explanation:`Edges = vertices − 1 = ${vertices} − 1 = ${edges}`});
+};
+
 const MATHS10_TOPICS = [
   {key:'quadratics', label:'Quadratic Equations', gen:M10.quadratics},
   {key:'simultaneous', label:'Simultaneous Equations', gen:M10.simultaneous},
@@ -1663,6 +1989,12 @@ const MATHS10_TOPICS = [
   {key:'indicesSurds10', label:'Indices & Surds', gen:M10.indicesSurds},
   {key:'coordinateGeometry', label:'Coordinate Geometry', gen:M10.coordinateGeometry},
   {key:'financialY10', label:'Financial Mathematics', gen:M10.financialY10},
+  {key:'probabilityStats10', label:'Probability & Statistics', gen:M10.probabilityStats10},
+  {key:'functionsGraphs10', label:'Functions & Graphs', gen:M10.functionsGraphs},
+  {key:'nonLinear10', label:'Non-linear Relationships', gen:M10.nonLinear},
+  {key:'geometricProof10', label:'Geometric Proof', gen:M10.geometricProof},
+  {key:'ratesOfChange10', label:'Rates of Change', gen:M10.ratesOfChange},
+  {key:'networks10', label:'Networks', gen:M10.networks},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 11 (Standard pathway) ============================= */
@@ -2771,7 +3103,7 @@ const TOPIC_SETS = {
 };
 
 /* ============================= APP STATE & UI ============================= */
-const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:20, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null };
+const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null };
 
 const studentNameInput = document.getElementById('student-name-input');
 studentNameInput.addEventListener('input', ()=>{ state.studentName = studentNameInput.value.trim(); });
@@ -2911,6 +3243,7 @@ function weightedTopicPick(topics){
 
 function buildAndStartTest(){
   state.isNaplan = false;
+  state.sessionStartTime = Date.now();
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   const allTopics = TOPIC_SETS[state.year][state.subject];
   const topics = allTopics.filter(t=>state.selectedTopics.has(t.key));
@@ -2974,6 +3307,7 @@ function buildAndStartNaplanTest(){
   state.naplanDomain = naplanDomain;
   state.year = naplanYear;
   state.level = 'intermediate'; // representative national-average difficulty spread
+  state.sessionStartTime = Date.now();
 
   let questions;
   if(naplanDomain==='numeracy'){
@@ -3166,6 +3500,16 @@ function endTypingTest(){
   document.getElementById('typing-result-accuracy').textContent = accuracy+'%';
   document.getElementById('typing-result-chars').textContent = totalTyped;
   document.getElementById('typing-result-errors').textContent = errors;
+
+  saveHistoryRecord({
+    type:'typing',
+    date: new Date().toISOString(),
+    student: state.studentName || 'Unnamed',
+    level: typingLevel,
+    durationSeconds: typingState.duration,
+    wpm, accuracy, totalTyped, errors
+  });
+
   showView('typing-results-view');
 }
 document.getElementById('typing-retry-btn').addEventListener('click', startTypingTest);
@@ -3188,6 +3532,21 @@ function showNaplanResults(){
   const heroEl = document.getElementById('naplan-results-hero');
   heroEl.classList.remove('glow-good','glow-amber','glow-bad');
   heroEl.classList.add(glowClass);
+
+  // NAPLAN results are tracked (so nothing you do in the app goes unrecorded), but kept
+  // out of topicBreakdown deliberately — this keeps NAPLAN scores from skewing the
+  // regular Practice weak-spot analysis, which is about your day-to-day topic work.
+  saveHistoryRecord({
+    id: 'r' + Date.now() + '_' + Math.random().toString(36).slice(2,8),
+    type:'naplan',
+    kind: state.naplanDomain,
+    date: new Date().toISOString(),
+    student: state.studentName || 'Unnamed',
+    year: state.year,
+    subject: state.subject,
+    correct, total, pct,
+    durationSeconds: Math.round((Date.now() - (state.sessionStartTime||Date.now()))/1000)
+  });
 
   const rows = state.questions.map((q,i)=>{
     const a = state.answers[i];
@@ -3302,7 +3661,8 @@ function endWarmup(){
     date: new Date().toISOString(),
     student: state.studentName || 'Unnamed',
     year: state.year, subject:'maths',
-    correct: warmupState.correct, total: warmupState.attempted, pct
+    correct: warmupState.correct, total: warmupState.attempted, pct,
+    durationSeconds: 60
   });
 }
 
@@ -3487,6 +3847,7 @@ function startSpellingBee(){
   sbState.index = 0;
   sbState.correct = 0;
   sbState.results = [];
+  sbState.sessionStartTime = Date.now();
   sbIntro.style.display='none';
   sbSummary.style.display='none';
   sbActive.style.display='block';
@@ -3546,7 +3907,8 @@ function endSpellingBee(){
     date: new Date().toISOString(),
     student: state.studentName || 'Unnamed',
     year: state.year, subject:'english',
-    correct: sbState.correct, total: sbState.words.length, pct
+    correct: sbState.correct, total: sbState.words.length, pct,
+    durationSeconds: Math.round((Date.now() - (sbState.sessionStartTime||Date.now()))/1000)
   });
 }
 
@@ -3738,6 +4100,7 @@ function showResults(){
     topics: topicSummaryLabel(),
     level: state.level,
     correct, total, pct,
+    durationSeconds: Math.round((Date.now() - (state.sessionStartTime||Date.now()))/1000),
     topicBreakdown: Object.values(topicMap),
     questionDetails
   });
@@ -3891,6 +4254,13 @@ function fmtShortDate(iso){
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, {day:'numeric', month:'short'});
 }
+function fmtDuration(seconds){
+  if(seconds===null || seconds===undefined || isNaN(seconds)) return '';
+  const s = Math.max(0, Math.round(seconds));
+  if(s < 60) return `${s}s`;
+  const m = Math.floor(s/60), rem = s%60;
+  return rem>0 ? `${m}m ${rem}s` : `${m}m`;
+}
 
 function computeTrend(records){
   if(records.length<4) return null;
@@ -3996,9 +4366,10 @@ function renderLog(containerId, records){
     const color = r.pct>=75 ? 'var(--good)' : (r.pct>=50 ? 'var(--amber-dark)' : 'var(--bad)');
     const bg = r.pct>=75 ? 'var(--good-bg)' : (r.pct>=50 ? '#FFF1DC' : 'var(--bad-bg)');
     const reviewable = Array.isArray(r.questionDetails) && r.questionDetails.length>0;
+    const durationTag = r.durationSeconds!=null ? ` · ⏱ ${fmtDuration(r.durationSeconds)}` : '';
     return `<div class="history-log-row${reviewable?' clickable':''}" data-idx="${i}" data-container="${containerId}">
       <div>
-        <div class="history-log-meta"><b>${r.student}</b> · Year ${r.year} · ${r.topics} · ${r.level}</div>
+        <div class="history-log-meta"><b>${r.student}</b> · Year ${r.year} · ${r.topics} · ${r.level}${durationTag}</div>
         <div class="history-log-date">${new Date(r.date).toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'})}${reviewable?' · <span class=\"history-log-review-hint\">tap to review →</span>':''}</div>
       </div>
       <div class="history-log-score" style="color:${color}; background:${bg};">${r.correct}/${r.total} (${r.pct}%)</div>
@@ -4084,9 +4455,10 @@ function renderWarmupLog(containerId, subject, warmupRecords){
     const color = r.pct>=75 ? 'var(--good)' : (r.pct>=50 ? 'var(--amber-dark)' : 'var(--bad)');
     const bg = r.pct>=75 ? 'var(--good-bg)' : (r.pct>=50 ? '#FFF1DC' : 'var(--bad-bg)');
     const kindLabel = r.kind==='maths_drill' ? 'Mental maths drill' : 'Spelling bee';
+    const durationTag = r.durationSeconds!=null ? ` · ⏱ ${fmtDuration(r.durationSeconds)}` : '';
     return `<div class="warmup-log-row">
       <div>
-        <div class="history-log-meta"><b>${r.student}</b> · ${kindLabel} · Year ${r.year}</div>
+        <div class="history-log-meta"><b>${r.student}</b> · ${kindLabel} · Year ${r.year}${durationTag}</div>
         <div class="history-log-date">${new Date(r.date).toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'})}</div>
       </div>
       <div class="history-log-score" style="color:${color}; background:${bg};">${r.correct}/${r.total} (${r.pct}%)</div>
@@ -4094,18 +4466,86 @@ function renderWarmupLog(containerId, subject, warmupRecords){
   }).join('');
 }
 
+/* --- NAPLAN history: tracked, but kept separate from graded-test weak-spot analysis --- */
+function renderNaplanLog(containerId, naplanRecords){
+  const el = document.getElementById(containerId);
+  if(naplanRecords.length===0){
+    el.innerHTML = `<p class="history-empty">No NAPLAN practice completed yet.</p>`;
+    return;
+  }
+  const sorted = naplanRecords.slice().reverse().slice(0,8);
+  el.innerHTML = sorted.map(r=>{
+    const color = r.pct>=75 ? 'var(--good)' : (r.pct>=50 ? 'var(--amber-dark)' : 'var(--bad)');
+    const bg = r.pct>=75 ? 'var(--good-bg)' : (r.pct>=50 ? '#FFF1DC' : 'var(--bad-bg)');
+    const kindLabel = r.kind==='numeracy' ? 'Numeracy' : 'Spelling';
+    const durationTag = r.durationSeconds!=null ? ` · ⏱ ${fmtDuration(r.durationSeconds)}` : '';
+    return `<div class="warmup-log-row">
+      <div>
+        <div class="history-log-meta"><b>${r.student}</b> · ${kindLabel} · Year ${r.year}${durationTag}</div>
+        <div class="history-log-date">${new Date(r.date).toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'})}</div>
+      </div>
+      <div class="history-log-score" style="color:${color}; background:${bg};">${r.correct}/${r.total} (${r.pct}%)</div>
+    </div>`;
+  }).join('');
+}
+
+/* --- Typing Practice history: entirely separate skill, its own section --- */
+function renderTypingHistory(all){
+  let records = all.filter(r=>r.type==='typing');
+  if(historyFilters.student && historyFilters.student!=='all'){
+    records = records.filter(r=>r.student===historyFilters.student);
+  }
+  const summaryEl = document.getElementById('history-typing-summary-cards');
+  const logEl = document.getElementById('history-typing-log');
+  const sessions = records.length;
+  const avgWpm = sessions>0 ? Math.round(records.reduce((a,r)=>a+r.wpm,0)/sessions) : 0;
+  const avgAcc = sessions>0 ? Math.round(records.reduce((a,r)=>a+r.accuracy,0)/sessions) : 0;
+  const trend = computeTrend(records.map(r=>({pct:r.wpm})));
+  let trendLabel = 'Not enough data', trendClass = 'trend-flat';
+  if(trend){
+    if(trend.delta >= 3){ trendLabel = `Improving ↑ (+${Math.round(trend.delta)} WPM)`; trendClass = 'trend-up'; }
+    else if(trend.delta <= -3){ trendLabel = `Slipping ↓ (${Math.round(trend.delta)} WPM)`; trendClass = 'trend-down'; }
+    else { trendLabel = 'Holding steady →'; trendClass = 'trend-flat'; }
+  }
+  summaryEl.innerHTML = `
+    <div class="history-stat-card"><div class="history-stat-num">${sessions}</div><div class="history-stat-label">Sessions</div></div>
+    <div class="history-stat-card"><div class="history-stat-num">${avgWpm}</div><div class="history-stat-label">Average WPM</div></div>
+    <div class="history-stat-card"><div class="history-stat-num">${avgAcc}%</div><div class="history-stat-label">Average accuracy</div></div>
+    <div class="history-stat-card"><div class="history-stat-num ${trendClass}" style="font-size:15px;">${trendLabel}</div><div class="history-stat-label">Recent trend</div></div>
+  `;
+  if(sessions===0){
+    logEl.innerHTML = `<p class="history-empty">No typing sessions yet.</p>`;
+    return;
+  }
+  const sorted = records.slice().reverse();
+  logEl.innerHTML = sorted.map(r=>{
+    const color = r.wpm>=40 ? 'var(--good)' : (r.wpm>=20 ? 'var(--amber-dark)' : 'var(--bad)');
+    const bg = r.wpm>=40 ? 'var(--good-bg)' : (r.wpm>=20 ? '#FFF1DC' : 'var(--bad-bg)');
+    return `<div class="history-log-row">
+      <div>
+        <div class="history-log-meta"><b>${r.student}</b> · ${r.level} words · ⏱ ${fmtDuration(r.durationSeconds)} · ${r.accuracy}% accuracy</div>
+        <div class="history-log-date">${new Date(r.date).toLocaleString(undefined,{dateStyle:'medium', timeStyle:'short'})}</div>
+      </div>
+      <div class="history-log-score" style="color:${color}; background:${bg};">${r.wpm} WPM</div>
+    </div>`;
+  }).join('');
+}
+
 function renderSubjectHistory(subject, all){
   const prefix = subject==='maths' ? 'history-maths' : 'history-english';
+  const naplanKind = subject==='maths' ? 'numeracy' : 'spelling';
   let filtered = all.filter(r=>r.subject===subject);
   if(historyFilters.student && historyFilters.student!=='all'){
     filtered = filtered.filter(r=>r.student===historyFilters.student);
   }
   const testRecords = filtered.filter(r=>(r.type||'test')==='test');
   const warmupRecords = filtered.filter(r=>r.type==='warmup');
+  const naplanRecords = filtered.filter(r=>r.type==='naplan' && r.kind===naplanKind);
 
   renderSummaryCards(`${prefix}-summary-cards`, testRecords);
   renderWeakSpots(`${prefix}-weakspots`, subject, testRecords);
   renderWarmupLog(`${prefix}-warmup-log`, subject, warmupRecords);
+  renderNaplanLog(`${prefix}-naplan-log`, naplanRecords);
   renderChartSVG(`${prefix}-chart-container`, testRecords);
   renderLog(`${prefix}-log`, testRecords);
 }
@@ -4115,6 +4555,7 @@ function renderHistoryView(){
   renderStudentFilterRow(all);
   renderSubjectHistory('maths', all);
   renderSubjectHistory('english', all);
+  renderTypingHistory(all);
 }
 
 /* ============================= HISTORY DETAIL VIEW (review one past test) ============================= */
