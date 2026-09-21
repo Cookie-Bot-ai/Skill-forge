@@ -3425,7 +3425,7 @@ function renderTypingPassage(){
     let cls = '';
     if(i < typed.length){ cls = typed[i]===ch ? 'ty-correct' : 'ty-incorrect'; }
     else if(i === typed.length){ cls = 'ty-cursor'; }
-    const displayCh = ch===' ' ? '&nbsp;' : ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const displayCh = ch===' ' ? ' ' : ch.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     html += `<span class="${cls}">${displayCh}</span>`;
   }
   const passageEl = document.getElementById('typing-passage');
