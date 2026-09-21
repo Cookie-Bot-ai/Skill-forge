@@ -789,7 +789,7 @@
       <div class="card" id="spellingbee-intro">
         <p class="section-label">Spelling bee warm-up</p>
         <p class="q-prompt" style="font-size:18px;">Listen to each word read aloud, then type the correct spelling. 10 words per round.</p>
-        <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Plays a real recorded pronunciation when available (needs internet), with your browser's voice as a backup. You can replay a word, and ask for its meaning, as many times as you like.</p>
+        <p style="font-size:13.5px; color:var(--ink-soft); margin-bottom:16px;">Plays a real recorded pronunciation when available (needs internet), with your browser's voice as a backup. The word's meaning is shown for every word too, in case the audio isn't clear.</p>
         <p class="section-label" style="margin-top:0;">Word difficulty</p>
         <div class="pill-row" id="spellingbee-level-row">
           <button class="pill" data-sblevel="basic">Basic</button>
@@ -814,11 +814,10 @@
           <div class="test-meta">SPELLING BEE</div>
           <div class="test-meta" id="spellingbee-progress">Word 1 / 10</div>
         </div>
-        <div style="text-align:center; margin:20px 0 8px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <div style="text-align:center; margin:20px 0 8px;">
           <button class="btn btn-secondary" id="spellingbee-replay-btn" style="width:auto; padding:12px 22px;">🔊 Play word</button>
-          <button class="btn btn-secondary" id="spellingbee-explain-btn" style="width:auto; padding:12px 22px;">💡 What does it mean?</button>
         </div>
-        <p id="spellingbee-explain-text" style="display:none; text-align:center; font-size:13.5px; color:var(--ink-2); background:var(--amber-bg); border:1px solid var(--amber); border-radius:12px; padding:12px 16px; margin:0 0 14px;"></p>
+        <p id="spellingbee-explain-text" style="text-align:center; font-size:13.5px; color:var(--ink-2); background:var(--amber-bg); border:1px solid var(--amber); border-radius:12px; padding:12px 16px; margin:0 0 14px;"></p>
         <div class="numeric-row">
           <input type="text" id="spellingbee-input" placeholder="Type the word you heard — press Enter" autocomplete="off" autocapitalize="off" spellcheck="false">
         </div>
@@ -3836,7 +3835,7 @@ function sbCurrentWord(){ return sbState.words[sbState.index]; }
 function sbShowWord(){
   sbProgress.textContent = `Word ${sbState.index+1} / ${sbState.words.length}`;
   sbInput.value = '';
-  document.getElementById('spellingbee-explain-text').style.display = 'none';
+  document.getElementById('spellingbee-explain-text').textContent = `Meaning: ${sbCurrentWord().def}`;
   speakWord(sbCurrentWord().w);
   setTimeout(()=>sbInput.focus(), 50);
 }
@@ -3857,13 +3856,6 @@ function startSpellingBee(){
   sbState.words.forEach(w=>fetchWordAudioUrl(w.w));
   sbShowWord();
 }
-
-document.getElementById('spellingbee-explain-btn').addEventListener('click', ()=>{
-  const el = document.getElementById('spellingbee-explain-text');
-  const word = sbCurrentWord();
-  el.textContent = `Meaning: ${word.def}`;
-  el.style.display = 'block';
-});
 
 function submitSpellingAnswer(){
   const given = sbInput.value.trim();
