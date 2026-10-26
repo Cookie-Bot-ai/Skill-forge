@@ -637,7 +637,15 @@
     </div>
 
     <button class="btn btn-stamp" id="start-btn" disabled>Choose year, subject &amp; topic</button>
-    <button class="btn btn-secondary" id="exam-mock-btn" style="display:none; margin-top:10px;">🎓 Year 9 exam mock: 30 questions, new numbers every time</button>
+    <div id="exam-mock-box" style="display:none; margin-top:16px;">
+      <p class="section-label">🎓 Year 9 exam practice <span class="section-sublabel">(new numbers every time)</span></p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-secondary" data-mock="quick">⚡ Quick check: 15 questions, about 20 minutes</button>
+        <button class="btn btn-secondary" data-mock="warmup">🌱 Warm-up mock: 30 questions, mostly easier</button>
+        <button class="btn btn-secondary" data-mock="standard">🎓 Exam mock: 30 questions, same mix as the exam (45 minutes)</button>
+        <button class="btn btn-secondary" data-mock="challenge">🔥 Challenge mock: 30 questions, harder</button>
+      </div>
+    </div>
     <p id="home-error" style="color:var(--bad); font-size:13px; text-align:center; margin-top:10px; display:none;"></p>
   </div>
 
@@ -3723,7 +3731,7 @@ const TOPIC_SETS = {
 };
 
 /* ============================= APP STATE & UI ============================= */
-const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null, examMock:false };
+const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null, examMock:false, examMockKind:null };
 
 const studentNameInput = document.getElementById('student-name-input');
 studentNameInput.addEventListener('input', ()=>{ state.studentName = studentNameInput.value.trim(); });
@@ -3828,7 +3836,7 @@ startBtn.addEventListener('click', ()=>{
 
 function topicSummaryLabel(){
   if(state.isNaplan) return state.naplanDomain==='numeracy' ? 'NAPLAN Numeracy' : 'NAPLAN Spelling';
-  if(state.examMock) return 'Year 9 exam mock';
+  if(state.examMock) return state.examMock;
   const allTopics = TOPIC_SETS[state.year][state.subject];
   if(state.selectedTopics.size === allTopics.length) return 'All topics';
   const chosen = allTopics.filter(t=>state.selectedTopics.has(t.key));
@@ -3867,32 +3875,35 @@ function weightedTopicPick(topics){
 }
 
 
-/* ============================= YEAR 9 EXAM MOCK =============================
-   30 questions in the same mix as the written exam: Indices 5, Numbers of any magnitude 5,
-   Algebraic techniques 5, Equations 5, Linear relationships 6, Probability 4.
-   New numbers every time. Goes straight to the questions (closed-book style, no warm-up). */
-const EXAM9_PLAN = [
-  {key:'examIndices9',     n:{basic:2, intermediate:2, advanced:1}},
-  {key:'examMagnitude9',   n:{basic:2, intermediate:2, advanced:1}},
-  {key:'examAlgebra9',     n:{basic:1, intermediate:2, advanced:2}},
-  {key:'examEquations9',   n:{basic:1, intermediate:3, advanced:1}},
-  {key:'examLinear9',      n:{basic:2, intermediate:3, advanced:1}},
-  {key:'examProbability9', n:{basic:1, intermediate:2, advanced:1}},
-];
-function buildAndStartExamMock(){
+/* ============================= YEAR 9 EXAM MOCKS =============================
+   Four ready-made tests with new numbers every time. Each goes straight to the questions
+   (closed-book style, no warm-up). Every one covers the six assessed areas in this order:
+   Indices, Numbers of any magnitude, Algebraic techniques, Equations, Linear relationships, Probability.
+   Plan rows are [easy, medium, harder] question counts for each area. */
+const EXAM9_KEYS = ['examIndices9','examMagnitude9','examAlgebra9','examEquations9','examLinear9','examProbability9'];
+const EXAM9_MOCKS = {
+  quick:     {label:'Year 9 quick check',           plan:[[1,1,0],[1,1,0],[1,1,1],[1,1,1],[1,1,1],[1,1,0]]},   // 15 questions
+  warmup:    {label:'Year 9 exam mock - warm-up',   plan:[[3,2,0],[3,2,0],[3,2,0],[3,2,0],[3,3,0],[2,2,0]]},   // 30, no harder questions
+  standard:  {label:'Year 9 exam mock',             plan:[[2,2,1],[2,2,1],[1,2,2],[1,3,1],[2,3,1],[1,2,1]]},   // 30, same mix as the exam
+  challenge: {label:'Year 9 exam mock - challenge', plan:[[0,2,3],[0,2,3],[0,2,3],[0,2,3],[0,3,3],[0,1,3]]},   // 30, mostly harder
+};
+function buildAndStartExamMock(kind){
+  if(!EXAM9_MOCKS[kind]) kind = 'standard';
+  const cfg = EXAM9_MOCKS[kind];
   state.isNaplan = false;
-  state.examMock = true;
+  state.examMock = cfg.label;
+  state.examMockKind = kind;
   state.sessionStartTime = Date.now();
   state.year = '9'; state.subject = 'maths'; state.level = 'intermediate';
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   const byKey = {};
   TOPIC_SETS['9'].maths.forEach(t=>{ byKey[t.key] = t; });
-  state.selectedTopics = new Set(EXAM9_PLAN.map(p=>p.key));
+  state.selectedTopics = new Set(EXAM9_KEYS);
   const seen = new Set(), questions = [];
-  EXAM9_PLAN.forEach(p=>{
-    const t = byKey[p.key];
-    ['basic','intermediate','advanced'].forEach(d=>{
-      for(let i=0;i<p.n[d];i++){
+  EXAM9_KEYS.forEach((key,ai)=>{
+    const t = byKey[key];
+    ['basic','intermediate','advanced'].forEach((d,di)=>{
+      for(let i=0;i<cfg.plan[ai][di];i++){
         let q, tries=0;
         do { q = t.gen(d); tries++; } while(seen.has(q.prompt) && tries<25);
         seen.add(q.prompt);
@@ -3909,10 +3920,12 @@ function buildAndStartExamMock(){
   renderQuestion();
 }
 function updateExamMockBtn(){
-  const b = document.getElementById('exam-mock-btn');
-  if(b) b.style.display = (state.year==='9' && state.subject==='maths') ? 'block' : 'none';
+  const box = document.getElementById('exam-mock-box');
+  if(box) box.style.display = (state.year==='9' && state.subject==='maths') ? 'block' : 'none';
 }
-document.getElementById('exam-mock-btn').addEventListener('click', buildAndStartExamMock);
+document.querySelectorAll('#exam-mock-box [data-mock]').forEach(b=>{
+  b.addEventListener('click', ()=>buildAndStartExamMock(b.dataset.mock));
+});
 
 /* ============================= MY TOPICS (custom question import) =============================
    Lets a parent/tutor add their own questions from a plain-text template (one question per line,
@@ -5147,7 +5160,7 @@ function showResults(){
   showView('results-view');
 }
 
-document.getElementById('retry-btn').addEventListener('click', ()=>{ if(state.examMock) buildAndStartExamMock(); else buildAndStartTest(); });
+document.getElementById('retry-btn').addEventListener('click', ()=>{ if(state.examMock) buildAndStartExamMock(state.examMockKind); else buildAndStartTest(); });
 document.getElementById('home-btn').addEventListener('click', ()=>showView('home-view'));
 document.getElementById('view-history-from-results-btn').addEventListener('click', ()=>{ switchTab('history'); });
 
