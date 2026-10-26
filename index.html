@@ -567,7 +567,7 @@
     <button class="tab-btn selected" id="tab-practice-btn">Practice</button>
     <button class="tab-btn" id="tab-naplan-btn">NAPLAN</button>
     <button class="tab-btn" id="tab-typing-btn">Typing</button>
-    <button class="tab-btn" id="tab-custom-btn">My Topics</button>
+    <button class="tab-btn" id="tab-exam-btn">Exam Prep</button>
     <button class="tab-btn" id="tab-history-btn">History</button>
   </div>
 
@@ -613,7 +613,6 @@
         <input type="checkbox" id="topic-select-all">
         <span>Select all</span>
       </label>
-      <button class="link-btn" id="topic-only-custom-btn" style="display:none; margin:2px 0 8px 8px;">★ Select only my topics</button>
       <div id="topic-checkboxes" class="checkbox-grid"><p class="placeholder-text">Select year and subject first</p></div>
     </div>
 
@@ -637,15 +636,7 @@
     </div>
 
     <button class="btn btn-stamp" id="start-btn" disabled>Choose year, subject &amp; topic</button>
-    <div id="exam-mock-box" style="display:none; margin-top:16px;">
-      <p class="section-label">🎓 Year 9 exam practice <span class="section-sublabel">(new numbers every time)</span></p>
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button class="btn btn-secondary" data-mock="quick">⚡ Quick check: 15 questions, about 20 minutes</button>
-        <button class="btn btn-secondary" data-mock="warmup">🌱 Warm-up mock: 30 questions, mostly easier</button>
-        <button class="btn btn-secondary" data-mock="standard">🎓 Exam mock: 30 questions, same mix as the exam (45 minutes)</button>
-        <button class="btn btn-secondary" data-mock="challenge">🔥 Challenge mock: 30 questions, harder</button>
-      </div>
-    </div>
+    
     <p id="home-error" style="color:var(--bad); font-size:13px; text-align:center; margin-top:10px; display:none;"></p>
   </div>
 
@@ -696,28 +687,48 @@
     </div>
   </div>
 
-  <!-- MY TOPICS (custom question import) VIEW -->
-  <div id="custom-view" class="view">
+  <!-- EXAM PREP VIEW -->
+  <div id="exam-view" class="view">
     <div class="card">
-      <p class="section-label">📚 My Topics</p>
-      <p style="font-size:14px; line-height:1.6; margin:0 0 4px;">Add your own questions, such as what you are learning this week or what a tutor sets. Download the template, fill it in with Notepad, then import it. Your questions appear in Practice as ★ topics.</p>
-      <div class="btn-row" style="flex-wrap:wrap; margin-top:12px;">
+      <p class="section-label">🎓 Exam Prep</p>
+      <p style="font-size:14px; line-height:1.6; margin:0;">Get ready for a school test. Use the built-in Year 9 Maths practice below, or add your own questions for any year and subject. Your results are saved in History.</p>
+    </div>
+    <div class="card">
+      <p class="section-label">Year 9 Mathematics Core · Term 4 exam <span class="section-sublabel">(built in, new numbers every time)</span></p>
+      <p style="font-size:13.5px; color:var(--ink-soft); margin:0 0 12px;">Covers the six areas on the school notice: Indices, Numbers of any magnitude, Algebraic techniques, Equations, Linear relationships and Probability.</p>
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button class="btn btn-secondary" data-mock="quick">⚡ Quick check: 15 questions, about 20 minutes</button>
+        <button class="btn btn-secondary" data-mock="warmup">🌱 Warm-up mock: 30 questions, mostly easier</button>
+        <button class="btn btn-secondary" data-mock="standard">🎓 Exam mock: 30 questions, same mix as the exam (45 minutes)</button>
+        <button class="btn btn-secondary" data-mock="challenge">🔥 Challenge mock: 30 questions, harder</button>
+      </div>
+      <p class="section-label" style="margin-top:18px;">Practise one area <span class="section-sublabel">(15 questions)</span></p>
+      <div id="exam-area-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+    </div>
+    <div class="card">
+      <p class="section-label">★ Your exam questions</p>
+      <div id="exam-custom-list"></div>
+    </div>
+    <details class="card" id="exam-import-details">
+      <summary style="cursor:pointer; font-weight:700;">➕ Add or replace your own questions</summary>
+      <p style="font-size:14px; line-height:1.6; margin:12px 0 8px;">Download the template, fill it in with Notepad, then import it. A topic with the same year, subject and topic name is <b>replaced</b>. A new topic name is added. Nothing else is deleted. Use Export to edit your questions and import them again.</p>
+      <label style="display:block; font-size:13.5px; margin-bottom:6px;">When a topic already exists:
+        <select id="custom-mode" style="margin-left:6px; padding:6px 8px; border-radius:8px; border:1.5px solid var(--rule); font-size:13.5px;">
+          <option value="replace">Replace it (recommended)</option>
+          <option value="add">Add to it (skip duplicates)</option>
+        </select>
+      </label>
+      <div class="btn-row" style="flex-wrap:wrap; margin-top:10px;">
         <button class="btn btn-secondary" id="custom-template-btn">📋 Download template</button>
         <button class="btn btn-secondary" id="custom-import-btn">📥 Import file</button>
         <button class="btn btn-secondary" id="custom-export-btn">📤 Export my questions</button>
       </div>
       <input type="file" id="custom-file-input" accept=".txt,.csv,text/plain" style="display:none;">
-    </div>
-    <div class="card">
-      <p class="section-label">Or paste questions here</p>
+      <p class="section-label" style="margin-top:16px;">Or paste questions here</p>
       <textarea id="custom-paste-area" rows="5" placeholder="Paste lines from your template here..." style="width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--rule); font-size:14px; resize:vertical;" autocomplete="off" spellcheck="false"></textarea>
       <button class="btn btn-stamp" id="custom-paste-import-btn" style="margin-top:10px;">Import pasted questions</button>
-    </div>
+    </details>
     <div id="custom-result"></div>
-    <div class="card">
-      <p class="section-label">Your imported topics</p>
-      <div id="custom-topic-list"></div>
-    </div>
   </div>
 
   <!-- TYPING PRACTICE HOME VIEW -->
@@ -2156,12 +2167,6 @@ const MATHS9_TOPICS = [
   {key:'scientificNotation9', label:'Scientific Notation', gen:M9.scientificNotation},
   {key:'simultaneousIntro9', label:'Simultaneous Equations', gen:M9.simultaneousIntro},
   {key:'similarityCongruence9', label:'Similarity & Congruence', gen:M9.similarityCongruence},
-  {key:'examIndices9', label:'Exam prep: Indices', gen:M9.examIndices, exam:true},
-  {key:'examMagnitude9', label:'Exam prep: Numbers of any magnitude', gen:M9.examMagnitude, exam:true},
-  {key:'examAlgebra9', label:'Exam prep: Algebraic techniques', gen:M9.examAlgebra, exam:true},
-  {key:'examEquations9', label:'Exam prep: Equations', gen:M9.examEquations, exam:true},
-  {key:'examLinear9', label:'Exam prep: Linear relationships', gen:M9.examLinear, exam:true},
-  {key:'examProbability9', label:'Exam prep: Probability (multistage)', gen:M9.examProbability, exam:true},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 8 ============================= */
@@ -3731,7 +3736,7 @@ const TOPIC_SETS = {
 };
 
 /* ============================= APP STATE & UI ============================= */
-const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null, examMock:false, examMockKind:null };
+const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null, examMock:false, examRetry:null };
 
 const studentNameInput = document.getElementById('student-name-input');
 studentNameInput.addEventListener('input', ()=>{ state.studentName = studentNameInput.value.trim(); });
@@ -3820,11 +3825,7 @@ topicSelectAll.addEventListener('change', ()=>{
 function updateStartButton(){
   const ready = state.year && state.subject && state.selectedTopics.size>0;
   startBtn.disabled = !ready;
-  const customN = customOnlyCount();
-  const shownLen = customN!==null ? Math.min(state.length, customN) : state.length;
-  startBtn.textContent = ready ? `Start ${shownLen}-question test` : 'Choose year, subject & at least one topic';
-  updateOnlyCustomBtn();
-  updateExamMockBtn();
+  startBtn.textContent = ready ? `Start ${state.length}-question test` : 'Choose year, subject & at least one topic';
   startBtn.className = 'btn btn-stamp' + (state.subject ? ' '+state.subject : '');
 }
 
@@ -3875,67 +3876,82 @@ function weightedTopicPick(topics){
 }
 
 
-/* ============================= YEAR 9 EXAM MOCKS =============================
-   Four ready-made tests with new numbers every time. Each goes straight to the questions
-   (closed-book style, no warm-up). Every one covers the six assessed areas in this order:
-   Indices, Numbers of any magnitude, Algebraic techniques, Equations, Linear relationships, Probability.
-   Plan rows are [easy, medium, harder] question counts for each area. */
-const EXAM9_KEYS = ['examIndices9','examMagnitude9','examAlgebra9','examEquations9','examLinear9','examProbability9'];
+/* ============================= EXAM PREP TAB =============================
+   Everything for school-test preparation lives here, separate from everyday Practice:
+   1. Built-in Year 9 Maths Core exam practice (new numbers every time): four mock levels, plus one-area drills.
+   2. Your own questions, imported from a plain-text template (same idea as Story Time in Han Yu).
+      Importing a topic that already exists REPLACES it (or adds to it, if you choose "Add").
+   Imported questions are stored on this device only. Practice and NAPLAN never use them. */
+const EXAM9_AREAS = [
+  {key:'examIndices9',     short:'Indices',                  gen:M9.examIndices},
+  {key:'examMagnitude9',   short:'Numbers of any magnitude', gen:M9.examMagnitude},
+  {key:'examAlgebra9',     short:'Algebraic techniques',     gen:M9.examAlgebra},
+  {key:'examEquations9',   short:'Equations',                gen:M9.examEquations},
+  {key:'examLinear9',      short:'Linear relationships',     gen:M9.examLinear},
+  {key:'examProbability9', short:'Probability',              gen:M9.examProbability},
+];
+// Plan rows follow the order above. Each row is [easy, medium, harder] question counts.
 const EXAM9_MOCKS = {
   quick:     {label:'Year 9 quick check',           plan:[[1,1,0],[1,1,0],[1,1,1],[1,1,1],[1,1,1],[1,1,0]]},   // 15 questions
   warmup:    {label:'Year 9 exam mock - warm-up',   plan:[[3,2,0],[3,2,0],[3,2,0],[3,2,0],[3,3,0],[2,2,0]]},   // 30, no harder questions
   standard:  {label:'Year 9 exam mock',             plan:[[2,2,1],[2,2,1],[1,2,2],[1,3,1],[2,3,1],[1,2,1]]},   // 30, same mix as the exam
   challenge: {label:'Year 9 exam mock - challenge', plan:[[0,2,3],[0,2,3],[0,2,3],[0,2,3],[0,3,3],[0,1,3]]},   // 30, mostly harder
 };
-function buildAndStartExamMock(kind){
-  if(!EXAM9_MOCKS[kind]) kind = 'standard';
-  const cfg = EXAM9_MOCKS[kind];
+// Starts a test that is saved to History under `label`. `retryFn` rebuilds the same kind of test for "Try again".
+function beginExamSession(label, retryFn, year, subject, questions, topicKeys){
   state.isNaplan = false;
-  state.examMock = cfg.label;
-  state.examMockKind = kind;
+  state.examMock = label;
+  state.examRetry = retryFn;
   state.sessionStartTime = Date.now();
-  state.year = '9'; state.subject = 'maths'; state.level = 'intermediate';
-  Object.keys(usedBank).forEach(k=>delete usedBank[k]);
-  const byKey = {};
-  TOPIC_SETS['9'].maths.forEach(t=>{ byKey[t.key] = t; });
-  state.selectedTopics = new Set(EXAM9_KEYS);
-  const seen = new Set(), questions = [];
-  EXAM9_KEYS.forEach((key,ai)=>{
-    const t = byKey[key];
-    ['basic','intermediate','advanced'].forEach((d,di)=>{
-      for(let i=0;i<cfg.plan[ai][di];i++){
-        let q, tries=0;
-        do { q = t.gen(d); tries++; } while(seen.has(q.prompt) && tries<25);
-        seen.add(q.prompt);
-        q.topicKey = t.key;
-        q.reinforced = false;
-        questions.push(q);
-      }
-    });
-  });
+  state.year = year; state.subject = subject; state.level = 'intermediate';
+  state.selectedTopics = new Set(topicKeys||[]);
   state.questions = questions;
   state.index = 0;
   state.answers = new Array(questions.length).fill(null);
   showView('test-view');
   renderQuestion();
 }
-function updateExamMockBtn(){
-  const box = document.getElementById('exam-mock-box');
-  if(box) box.style.display = (state.year==='9' && state.subject==='maths') ? 'block' : 'none';
+function exGenUnique(topic, diff, seen){
+  let q, tries=0;
+  do { q = topic.gen(diff); tries++; } while(seen.has(q.prompt) && tries<25);
+  seen.add(q.prompt);
+  return q;
 }
-document.querySelectorAll('#exam-mock-box [data-mock]').forEach(b=>{
-  b.addEventListener('click', ()=>buildAndStartExamMock(b.dataset.mock));
-});
+function buildAndStartExamMock(kind){
+  if(!EXAM9_MOCKS[kind]) kind = 'standard';
+  const cfg = EXAM9_MOCKS[kind];
+  Object.keys(usedBank).forEach(k=>delete usedBank[k]);
+  const seen = new Set(), questions = [];
+  EXAM9_AREAS.forEach((area,ai)=>{
+    ['basic','intermediate','advanced'].forEach((d,di)=>{
+      for(let i=0;i<cfg.plan[ai][di];i++){
+        const q = exGenUnique(area, d, seen);
+        q.topicKey = area.key; q.reinforced = false;
+        questions.push(q);
+      }
+    });
+  });
+  beginExamSession(cfg.label, ()=>buildAndStartExamMock(kind), '9', 'maths', questions, EXAM9_AREAS.map(a=>a.key));
+}
+function buildAndStartExamArea(key){
+  const area = EXAM9_AREAS.find(a=>a.key===key);
+  if(!area) return;
+  Object.keys(usedBank).forEach(k=>delete usedBank[k]);
+  const seen = new Set(), questions = [];
+  [['basic',5],['intermediate',6],['advanced',4]].forEach(([d,n])=>{
+    for(let i=0;i<n;i++){
+      const q = exGenUnique(area, d, seen);
+      q.topicKey = area.key; q.reinforced = false;
+      questions.push(q);
+    }
+  });
+  beginExamSession('Year 9 exam practice: '+area.short, ()=>buildAndStartExamArea(key), '9', 'maths', questions, [key]);
+}
 
-/* ============================= MY TOPICS (custom question import) =============================
-   Lets a parent/tutor add their own questions from a plain-text template (one question per line,
-   columns separated by |), the same idea as the Han Yu "import patch". Questions are stored on this
-   device only (localStorage) and show up as ★ topics in Practice. Imports always MERGE and skip
-   anything already imported. NAPLAN never uses these. */
+/* ---------- Your own questions: storage, template format and checking ---------- */
 const CUSTOM_STORE_KEY = 'skillforge_custom_v1';
 const CUSTOM_VALID_YEARS = ["7", "8", "9", "10", "11", "12"];
 const CUSTOM_APP_NAME = 'Skill Forge';
-
 function loadCustomStore(){
   try{
     const raw = localStorage.getItem(CUSTOM_STORE_KEY);
@@ -4038,68 +4054,52 @@ function buildCustomQuestion(item){
   return mcqQ(item.topic, item.difficulty, item.question, item.answer, item.wrong, item.explanation||fallbackExplain);
 }
 
-function registerCustomTopics(){
-  Object.keys(TOPIC_SETS).forEach(y=>{
-    ['maths','english'].forEach(s=>{
-      const arr = TOPIC_SETS[y][s];
-      for(let i=arr.length-1;i>=0;i--){ if(arr[i].custom) arr.splice(i,1); }
-    });
-  });
-  const groups = {};
+
+function customGroups(){
+  const g = {};
   loadCustomStore().questions.forEach(q=>{
-    if(!TOPIC_SETS[q.year] || !TOPIC_SETS[q.year][q.subject]) return;
     const k = customTopicKey(q);
-    (groups[k] = groups[k] || []).push(q);
+    if(!g[k]) g[k] = {key:k, year:q.year, subject:q.subject, topic:q.topic, list:[]};
+    g[k].list.push(q);
   });
-  Object.keys(groups).forEach(key=>{
-    const list = groups[key], f = list[0];
-    TOPIC_SETS[f.year][f.subject].push({
-      key, label:'\u2605 '+f.topic, custom:true, questions:list, count:list.length,
-      gen: diff=>{
-        let pool = list.filter(q=>q.difficulty===diff);
-        const usingAll = pool.length===0;
-        if(usingAll) pool = list;
-        const item = pickFromBank('custom_'+key+'_'+(usingAll?'all':diff), pool);
-        return buildCustomQuestion(item);
-      }
-    });
+  return Object.values(g).sort((a,b)=>a.topic.localeCompare(b.topic));
+}
+// Your own topic: its questions, each once, shuffled (up to 50 per test).
+function buildAndStartCustom(keys, label, year, subject){
+  const groups = customGroups().filter(g=>keys.includes(g.key));
+  if(!groups.length) return;
+  const pool = [];
+  groups.forEach(g=>g.list.forEach(item=>pool.push({g, item})));
+  const questions = shuffle(pool).slice(0,50).map(({g,item})=>{
+    const q = buildCustomQuestion(item);
+    q.topicKey = g.key; q.reinforced = false;
+    return q;
   });
+  beginExamSession(label, ()=>buildAndStartCustom(keys,label,year,subject), year, subject, questions, keys);
+}
+function startCustomTopic(key){
+  const g = customGroups().find(x=>x.key===key);
+  if(g) buildAndStartCustom([key], '\u2605 '+g.topic, g.year, g.subject);
+}
+function startCustomMix(groupKey){
+  const [y,s] = groupKey.split('|');
+  const keys = customGroups().filter(g=>g.year===y && g.subject===s).map(g=>g.key);
+  if(keys.length) buildAndStartCustom(keys, '\u2605 Year '+y+' '+(s==='maths'?'Maths':'English')+' - all my topics', y, s);
 }
 
-// When only custom topics are ticked, the test is exactly those questions (each once, shuffled).
-function customOnlyCount(){
-  if(!state.year || !state.subject || state.selectedTopics.size===0) return null;
-  const topics = TOPIC_SETS[state.year][state.subject].filter(t=>state.selectedTopics.has(t.key));
-  if(!topics.length || !topics.every(t=>t.custom)) return null;
-  return topics.reduce((a,t)=>a+t.count, 0);
-}
-function updateOnlyCustomBtn(){
-  const btn = document.getElementById('topic-only-custom-btn');
-  if(!btn) return;
-  const has = state.year && state.subject && TOPIC_SETS[state.year][state.subject].some(t=>t.custom);
-  btn.style.display = has ? 'inline-block' : 'none';
-}
-document.getElementById('topic-only-custom-btn').addEventListener('click', ()=>{
-  if(!state.year || !state.subject) return;
-  const customKeys = TOPIC_SETS[state.year][state.subject].filter(t=>t.custom).map(t=>t.key);
-  state.selectedTopics = new Set(customKeys);
-  topicCheckboxes.querySelectorAll('.topic-cb').forEach(cb=>{ cb.checked = state.selectedTopics.has(cb.value); });
-  topicSelectAll.checked = false;
-  updateStartButton();
-});
-
-/* --- Template, export, import UI --- */
+/* ---------- Template, export, import (replace or add) ---------- */
 function customHeaderLines(){
   return [
-    '# '+CUSTOM_APP_NAME+' - question import template',
+    '# '+CUSTOM_APP_NAME+' - exam prep question template',
     '# One question per line. Columns are separated by the | character. Lines starting with # are ignored.',
-    '# Save as a .txt file (UTF-8) and import it on the My Topics tab. Imports always add to what you already have.',
+    '# Save as a .txt file (UTF-8). Import it on the Exam Prep tab ("Add or replace your own questions").',
+    '# A topic with the same year, subject and topic name is REPLACED when you import it (unless you choose "Add"). A new topic name is added.',
     '#',
     '# year | subject | topic | difficulty | type | question | answer | wrong1 | wrong2 | wrong3 | explanation',
     '#',
     '# year: '+CUSTOM_VALID_YEARS.join(', '),
     '# subject: maths or english',
-    '# topic: any name you like. Questions with the same year, subject and topic are grouped into one topic',
+    '# topic: any name you like, for example Term 4 exam - Equations. Questions with the same year, subject and topic are one topic',
     '# difficulty: easy, medium or hard (blank = medium)',
     '# type: choice (multiple choice) or number (the student types a number). Blank = choice if wrong answers are given, otherwise number',
     '# answer: the correct answer',
@@ -4117,8 +4117,8 @@ function downloadTextFile(filename, text){
   setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
 }
 document.getElementById('custom-template-btn').addEventListener('click', ()=>{
-  const lines = customHeaderLines().concat(['#', '# Examples - delete these or keep them to test the import:'], ["9 | maths | Week 3 Algebra | medium | choice | Expand 3(x + 4) | 3x + 12 | 3x + 4 | x + 12 | 3x + 7 | Multiply both terms inside the bracket by 3.", "9 | maths | Week 3 Algebra | easy | number | Solve 2x + 3 = 11. What is x? | 4 | | | | Subtract 3 from both sides, then divide by 2.", "8 | english | Class novel words | easy | choice | What does \"reluctant\" mean? | unwilling | eager | tired | angry |"]);
-  downloadTextFile('SkillForge_Question_Template.txt', lines.join('\r\n')+'\r\n');
+  const lines = customHeaderLines().concat(['#', '# Examples - delete these or keep them to test the import:'], ["9 | maths | Term 4 exam - Equations | easy | number | Solve 2x + 3 = 11. What is x? | 4 | | | | Subtract 3 from both sides, then divide by 2.", "9 | maths | Term 4 exam - Equations | medium | choice | Expand 3(x + 4) | 3x + 12 | 3x + 4 | x + 12 | 3x + 7 | Multiply both terms inside the bracket by 3.", "8 | english | Class novel words | easy | choice | What does \"reluctant\" mean? | unwilling | eager | tired | angry |"]);
+  downloadTextFile('SkillForge_Exam_Prep_Template.txt', lines.join('\r\n')+'\r\n');
 });
 document.getElementById('custom-export-btn').addEventListener('click', ()=>{
   const store = loadCustomStore();
@@ -4129,66 +4129,102 @@ document.getElementById('custom-export-btn').addEventListener('click', ()=>{
     const w = (q.wrong||[]).concat(['','','']).slice(0,3);
     lines.push([q.year, q.subject, q.topic, diffLabel[q.difficulty]||'medium', q.type, q.question, q.answer, w[0], w[1], w[2], q.explanation||''].join(' | '));
   });
-  downloadTextFile('SkillForge_My_Questions.txt', lines.join('\r\n')+'\r\n');
+  downloadTextFile('SkillForge_My_Exam_Questions.txt', lines.join('\r\n')+'\r\n');
 });
-
-function renderCustomResult(res, saved, message){
+function renderCustomResult(res, saved, message, changes){
   const el = document.getElementById('custom-result');
   if(message){ el.innerHTML = '<div class="card"><p class="review-line">'+message+'</p></div>'; return; }
   if(saved===false){
     el.innerHTML = '<div class="card" style="border-color:var(--bad);"><p class="review-line"><b>Could not save.</b> This browser blocked or filled its storage, so nothing was imported.</p></div>';
     return;
   }
+  changes = changes || {replaced:[], added:[], extended:[]};
   const errs = res.invalid.slice(0,10).map(i=>'<p class="review-line">'+(i.line? 'Line '+i.line+': ' : '')+i.reason+'</p>').join('');
   const more = res.invalid.length>10 ? '<p class="review-line">...and '+(res.invalid.length-10)+' more.</p>' : '';
+  const notes = [];
+  if(changes.replaced.length) notes.push('<p class="review-line"><b>Replaced:</b> '+changes.replaced.join(', ')+'</p>');
+  if(changes.added.length)    notes.push('<p class="review-line"><b>New topics:</b> '+changes.added.join(', ')+'</p>');
+  if(changes.extended.length) notes.push('<p class="review-line"><b>Added to:</b> '+changes.extended.join(', ')+'</p>');
   el.innerHTML = '<div class="card"><p class="section-label">Import result</p>'
-    + '<p class="review-line"><b>'+res.added.length+'</b> added &nbsp;·&nbsp; <b>'+res.skipped.length+'</b> skipped (already imported) &nbsp;·&nbsp; <b>'+res.invalid.length+'</b> need fixing</p>'
+    + '<p class="review-line"><b>'+res.added.length+'</b> questions imported &nbsp;·&nbsp; <b>'+res.skipped.length+'</b> skipped (duplicates) &nbsp;·&nbsp; <b>'+res.invalid.length+'</b> need fixing</p>'
+    + notes.join('')
     + (res.invalid.length ? '<div class="working-block"><p class="working-label">Lines to fix, then import again</p>'+errs+more+'</div>' : '')
     + '</div>';
 }
+// mode "replace": every topic found in the file replaces the topic of the same year/subject/name.
+// mode "add": new questions are added to existing topics (duplicates skipped).
 function importCustomText(text){
+  const modeEl = document.getElementById('custom-mode');
+  const mode = modeEl ? modeEl.value : 'replace';
   const store = loadCustomStore();
-  const res = parseCustomText(text, store);
+  const res = parseCustomText(text, mode==='replace' ? {questions:[]} : store);
+  const oldCounts = {};
+  store.questions.forEach(q=>{ const k=customTopicKey(q); oldCounts[k]=(oldCounts[k]||0)+1; });
+  const newGroups = {};
+  res.added.forEach(q=>{ const k=customTopicKey(q); if(!newGroups[k]) newGroups[k]={topic:q.topic, n:0}; newGroups[k].n++; });
+  const changes = {replaced:[], added:[], extended:[]};
   let saved = true;
   if(res.added.length){
-    store.questions = store.questions.concat(res.added);
+    let kept = store.questions;
+    if(mode==='replace') kept = kept.filter(q=>!(customTopicKey(q) in newGroups));
+    store.questions = kept.concat(res.added);
     saved = saveCustomStore(store);
-    if(saved){
-      registerCustomTopics();
-      if(state.year && state.subject) refreshTopics();
-    }
+    Object.keys(newGroups).forEach(k=>{
+      const g = newGroups[k], old = oldCounts[k]||0;
+      if(old===0) changes.added.push(g.topic+' ('+g.n+')');
+      else if(mode==='replace') changes.replaced.push(g.topic+' ('+old+' \u2192 '+g.n+')');
+      else changes.extended.push(g.topic+' (+'+g.n+')');
+    });
   }
-  renderCustomResult(res, saved);
-  renderCustomView();
-  return res;
+  renderCustomResult(res, saved, null, changes);
+  renderExamView();
+  return {added:res.added, skipped:res.skipped, invalid:res.invalid, changes};
 }
 function deleteCustomTopic(key){
   if(!confirm('Delete this topic and all of its questions from this device?')) return;
   const store = loadCustomStore();
   store.questions = store.questions.filter(q=>customTopicKey(q)!==key);
   saveCustomStore(store);
-  registerCustomTopics();
-  if(state.year && state.subject) refreshTopics();
-  renderCustomView();
+  renderExamView();
 }
-function renderCustomView(){
-  const store = loadCustomStore();
-  const groups = {};
-  store.questions.forEach(q=>{
-    const k = customTopicKey(q);
-    if(!groups[k]) groups[k] = {key:k, year:q.year, subject:q.subject, topic:q.topic, count:0};
-    groups[k].count++;
-  });
-  const list = Object.values(groups).sort((a,b)=>a.topic.localeCompare(b.topic));
-  const el = document.getElementById('custom-topic-list');
-  if(!list.length){ el.innerHTML = '<p class="history-empty">Nothing imported yet.</p>'; return; }
-  el.innerHTML = list.map(g=>
-    '<div class="history-log-row"><div><div class="history-log-meta"><b>\u2605 '+g.topic+'</b></div>'
-    + '<div class="history-log-date">Year '+g.year+' · '+(g.subject==='maths'?'Maths':'English')+' · '+g.count+' question'+(g.count===1?'':'s')+'</div></div>'
-    + '<button class="link-btn" data-del="'+g.key+'">Delete</button></div>'
-  ).join('');
-  el.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', ()=>deleteCustomTopic(b.dataset.del)));
+
+/* ---------- The Exam Prep screen ---------- */
+function renderExamView(){
+  const areaEl = document.getElementById('exam-area-list');
+  areaEl.innerHTML = EXAM9_AREAS.map(a=>'<button class="btn btn-secondary" data-area="'+a.key+'">'+a.short+'</button>').join('');
+  const groups = customGroups();
+  const listEl = document.getElementById('exam-custom-list');
+  if(!groups.length){
+    listEl.innerHTML = '<p class="history-empty">Nothing added yet. Open "Add or replace your own questions" below to import some.</p>';
+    return;
+  }
+  const byGroup = {};
+  groups.forEach(g=>{ const k=g.year+'|'+g.subject; (byGroup[k]=byGroup[k]||[]).push(g); });
+  listEl.innerHTML = Object.keys(byGroup).sort((a,b)=>(parseInt(a)||0)-(parseInt(b)||0) || a.localeCompare(b)).map(k=>{
+    const parts = k.split('|'), y = parts[0], s = parts[1], list = byGroup[k];
+    const total = list.reduce((a,g)=>a+g.list.length, 0);
+    return '<p class="section-label" style="margin-top:10px;">Year '+y+' · '+(s==='maths'?'Maths':'English')+'</p>'
+      + list.map(g=>'<div class="history-log-row"><div><div class="history-log-meta"><b>\u2605 '+g.topic+'</b></div>'
+          + '<div class="history-log-date">'+g.list.length+' question'+(g.list.length===1?'':'s')+'</div></div>'
+          + '<div style="display:flex; gap:10px; align-items:center;"><button class="btn btn-secondary" style="width:auto; padding:8px 16px;" data-start="'+g.key+'">Start</button>'
+          + '<button class="link-btn" data-del="'+g.key+'">Delete</button></div></div>').join('')
+      + (list.length>1 ? '<button class="btn btn-secondary" style="margin-top:8px;" data-mix="'+k+'">Mix all of these ('+total+' questions)</button>' : '');
+  }).join('');
 }
+document.getElementById('exam-area-list').addEventListener('click', e=>{
+  const b = e.target.closest('button[data-area]');
+  if(b) buildAndStartExamArea(b.dataset.area);
+});
+document.getElementById('exam-custom-list').addEventListener('click', e=>{
+  const b = e.target.closest('button');
+  if(!b) return;
+  if(b.dataset.start) startCustomTopic(b.dataset.start);
+  else if(b.dataset.mix) startCustomMix(b.dataset.mix);
+  else if(b.dataset.del) deleteCustomTopic(b.dataset.del);
+});
+document.querySelectorAll('#exam-view [data-mock]').forEach(b=>{
+  b.addEventListener('click', ()=>buildAndStartExamMock(b.dataset.mock));
+});
 document.getElementById('custom-import-btn').addEventListener('click', ()=>document.getElementById('custom-file-input').click());
 document.getElementById('custom-file-input').addEventListener('change', e=>{
   const file = e.target.files && e.target.files[0];
@@ -4205,8 +4241,6 @@ document.getElementById('custom-paste-import-btn').addEventListener('click', ()=
   if(res.added.length) area.value = '';
 });
 
-registerCustomTopics();
-
 
 function buildAndStartTest(){
   state.isNaplan = false;
@@ -4215,30 +4249,18 @@ function buildAndStartTest(){
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   const allTopics = TOPIC_SETS[state.year][state.subject];
   const topics = allTopics.filter(t=>state.selectedTopics.has(t.key));
-    let questions;
-  if(topics.length && topics.every(t=>t.custom)){
-    // Only the user's own topics ticked: use exactly their questions, each once, shuffled.
-    const pool = [];
-    topics.forEach(t=>t.questions.forEach(item=>pool.push({t, item})));
-    questions = shuffle(pool).slice(0, state.length).map(({t, item})=>{
-      const q = buildCustomQuestion(item);
-      q.topicKey = t.key;
-      q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, t.key)]||0) > 0;
-      return q;
-    });
-  } else {
-    const dist = distByLength(state.length, state.level);
-    let sequence = [];
-    Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
-    sequence = shuffle(sequence);
-    questions = sequence.map(diff=>{
-      const topicObj = topics.length>1 ? weightedTopicPick(topics) : topics[0];
-      const q = topicObj.gen(diff);
-      q.topicKey = topicObj.key;
-      q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, topicObj.key)]||0) > 0;
-      return q;
-    });
-  }
+  const dist = distByLength(state.length, state.level);
+  let sequence = [];
+  Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
+  sequence = shuffle(sequence);
+
+  const questions = sequence.map(diff=>{
+    const topicObj = topics.length>1 ? weightedTopicPick(topics) : topics[0];
+    const q = topicObj.gen(diff);
+    q.topicKey = topicObj.key;
+    q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, topicObj.key)]||0) > 0;
+    return q;
+  });
 
   state.questions = questions;
   state.index = 0;
@@ -4293,7 +4315,7 @@ function buildAndStartNaplanTest(){
   let questions;
   if(naplanDomain==='numeracy'){
     state.subject = 'maths';
-    const topics = TOPIC_SETS[naplanYear].maths.filter(t=>!t.custom);
+    const topics = TOPIC_SETS[naplanYear].maths;
     const dist = distByLength(20, 'intermediate');
     let sequence = [];
     Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
@@ -4981,7 +5003,7 @@ document.getElementById('flag-btn').addEventListener('click', ()=>{
 });
 
 document.getElementById('quit-btn').addEventListener('click', ()=>{
-  if(confirm('Quit this test? Your progress will not be saved.')) showView(state.isNaplan ? 'naplan-home-view' : 'home-view');
+  if(confirm('Quit this test? Your progress will not be saved.')){ if(state.examMock) switchTab('exam'); else showView(state.isNaplan ? 'naplan-home-view' : 'home-view'); }
 });
 
 /* --- History persistence (localStorage) ---
@@ -5160,8 +5182,8 @@ function showResults(){
   showView('results-view');
 }
 
-document.getElementById('retry-btn').addEventListener('click', ()=>{ if(state.examMock) buildAndStartExamMock(state.examMockKind); else buildAndStartTest(); });
-document.getElementById('home-btn').addEventListener('click', ()=>showView('home-view'));
+document.getElementById('retry-btn').addEventListener('click', ()=>{ if(state.examMock && state.examRetry) state.examRetry(); else buildAndStartTest(); });
+document.getElementById('home-btn').addEventListener('click', ()=>{ if(state.examMock) switchTab('exam'); else showView('home-view'); });
 document.getElementById('view-history-from-results-btn').addEventListener('click', ()=>{ switchTab('history'); });
 
 function showView(id){
@@ -5170,13 +5192,20 @@ function showView(id){
   const tabBar = document.getElementById('tab-bar');
   tabBar.style.display = (id==='test-view' || id==='warmup-view' || id==='history-detail-view' || id==='typing-active-view') ? 'none' : 'flex';
   window.scrollTo({top:0, behavior:'smooth'});
+  if(id==='home-view') syncPracticeSelection();
+}
+// Exam and NAPLAN tests set state.year/subject for their own use; this puts Practice back in step with its on-screen pills.
+function syncPracticeSelection(){
+  const yb = yearRow.querySelector('.pill.selected'), sc = subjectRow.querySelector('.subject-card.selected');
+  const y = yb ? yb.dataset.year : null, s = sc ? sc.dataset.subject : null;
+  if(state.year!==y || state.subject!==s){ state.year=y; state.subject=s; refreshTopics(); }
 }
 
 /* ============================= HISTORY TAB ============================= */
 const tabPracticeBtn = document.getElementById('tab-practice-btn');
 const tabNaplanBtn = document.getElementById('tab-naplan-btn');
 const tabTypingBtn = document.getElementById('tab-typing-btn');
-const tabCustomBtn = document.getElementById('tab-custom-btn');
+const tabExamBtn = document.getElementById('tab-exam-btn');
 const tabHistoryBtn = document.getElementById('tab-history-btn');
 let historyFilters = { student:'all' };
 
@@ -5184,7 +5213,7 @@ function switchTab(tab){
   tabPracticeBtn.classList.remove('selected');
   tabNaplanBtn.classList.remove('selected');
   tabTypingBtn.classList.remove('selected');
-  tabCustomBtn.classList.remove('selected');
+  tabExamBtn.classList.remove('selected');
   tabHistoryBtn.classList.remove('selected');
   if(tab==='history'){
     tabHistoryBtn.classList.add('selected');
@@ -5193,10 +5222,10 @@ function switchTab(tab){
   } else if(tab==='naplan'){
     tabNaplanBtn.classList.add('selected');
     showView('naplan-home-view');
-  } else if(tab==='custom'){
-    tabCustomBtn.classList.add('selected');
-    renderCustomView();
-    showView('custom-view');
+  } else if(tab==='exam'){
+    tabExamBtn.classList.add('selected');
+    renderExamView();
+    showView('exam-view');
   } else if(tab==='typing'){
     tabTypingBtn.classList.add('selected');
     showView('typing-home-view');
@@ -5208,7 +5237,7 @@ function switchTab(tab){
 tabPracticeBtn.addEventListener('click', ()=>switchTab('practice'));
 tabNaplanBtn.addEventListener('click', ()=>switchTab('naplan'));
 tabTypingBtn.addEventListener('click', ()=>switchTab('typing'));
-tabCustomBtn.addEventListener('click', ()=>switchTab('custom'));
+tabExamBtn.addEventListener('click', ()=>switchTab('exam'));
 tabHistoryBtn.addEventListener('click', ()=>switchTab('history'));
 
 function renderStudentFilterRow(all){
@@ -5409,6 +5438,7 @@ function renderWeakSpots(containerId, subject, testRecords){
 }
 
 function practiceWeakSpot(year, subject, topicKey){
+  if(String(topicKey).startsWith('exam') || String(topicKey).startsWith('custom_')){ switchTab('exam'); window.scrollTo({top:0, behavior:'smooth'}); return; }
   const yearBtn = yearRow.querySelector(`[data-year="${year}"]`);
   if(yearBtn) yearBtn.click();
   const subjectCard = subjectRow.querySelector(`.subject-card[data-subject="${subject}"]`);
