@@ -543,6 +543,7 @@
   footer.note{
     text-align:center; font-size:12px; color:var(--ink-soft); margin-top:28px;
   }
+  @media (max-width:520px){ .tab-btn{ font-size:12.5px; padding:9px 4px; } }
 </style>
 </head>
 <body>
@@ -566,6 +567,7 @@
     <button class="tab-btn selected" id="tab-practice-btn">Practice</button>
     <button class="tab-btn" id="tab-naplan-btn">NAPLAN</button>
     <button class="tab-btn" id="tab-typing-btn">Typing</button>
+    <button class="tab-btn" id="tab-custom-btn">My Topics</button>
     <button class="tab-btn" id="tab-history-btn">History</button>
   </div>
 
@@ -611,6 +613,7 @@
         <input type="checkbox" id="topic-select-all">
         <span>Select all</span>
       </label>
+      <button class="link-btn" id="topic-only-custom-btn" style="display:none; margin:2px 0 8px 8px;">★ Select only my topics</button>
       <div id="topic-checkboxes" class="checkbox-grid"><p class="placeholder-text">Select year and subject first</p></div>
     </div>
 
@@ -634,6 +637,7 @@
     </div>
 
     <button class="btn btn-stamp" id="start-btn" disabled>Choose year, subject &amp; topic</button>
+    <button class="btn btn-secondary" id="exam-mock-btn" style="display:none; margin-top:10px;">🎓 Year 9 exam mock: 30 questions, new numbers every time</button>
     <p id="home-error" style="color:var(--bad); font-size:13px; text-align:center; margin-top:10px; display:none;"></p>
   </div>
 
@@ -681,6 +685,30 @@
     <div class="btn-row">
       <button class="btn btn-secondary" id="naplan-retry-btn">Try another NAPLAN test</button>
       <button class="btn btn-stamp" id="naplan-home-btn">Back to NAPLAN home</button>
+    </div>
+  </div>
+
+  <!-- MY TOPICS (custom question import) VIEW -->
+  <div id="custom-view" class="view">
+    <div class="card">
+      <p class="section-label">📚 My Topics</p>
+      <p style="font-size:14px; line-height:1.6; margin:0 0 4px;">Add your own questions, such as what you are learning this week or what a tutor sets. Download the template, fill it in with Notepad, then import it. Your questions appear in Practice as ★ topics.</p>
+      <div class="btn-row" style="flex-wrap:wrap; margin-top:12px;">
+        <button class="btn btn-secondary" id="custom-template-btn">📋 Download template</button>
+        <button class="btn btn-secondary" id="custom-import-btn">📥 Import file</button>
+        <button class="btn btn-secondary" id="custom-export-btn">📤 Export my questions</button>
+      </div>
+      <input type="file" id="custom-file-input" accept=".txt,.csv,text/plain" style="display:none;">
+    </div>
+    <div class="card">
+      <p class="section-label">Or paste questions here</p>
+      <textarea id="custom-paste-area" rows="5" placeholder="Paste lines from your template here..." style="width:100%; padding:12px 14px; border-radius:12px; border:1.5px solid var(--rule); font-size:14px; resize:vertical;" autocomplete="off" spellcheck="false"></textarea>
+      <button class="btn btn-stamp" id="custom-paste-import-btn" style="margin-top:10px;">Import pasted questions</button>
+    </div>
+    <div id="custom-result"></div>
+    <div class="card">
+      <p class="section-label">Your imported topics</p>
+      <div id="custom-topic-list"></div>
     </div>
   </div>
 
@@ -1520,6 +1548,593 @@ M9.similarityCongruence = (diff) => {
   return numQ('Similarity & Congruence','advanced', `Shape B is similar to Shape A with a linear scale factor of ${scale}. Shape A has an area of ${areaA}cm². Find the area of Shape B.`, areaB, {tolerance:1, unit:'cm²', explanation:`Area scale factor = (linear scale)² = ${scale}² = ${scale*scale}. New area = ${areaA}×${scale*scale} = ${areaB}cm²`});
 };
 
+/* ============================= YEAR 9 EXAM PREP GENERATORS =============================
+   Built from the Year 9 Mathematics Core assessment areas: Indices; Numbers of any magnitude;
+   Algebraic techniques; Equations; Linear relationships; Probability (multistage).
+   Fresh numbers every time. Each question also carries a hidden _chk so it can be re-verified. */
+function exGcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const t=a%b; a=b; b=t; } return a; }
+function exLcm(a,b){ return a/exGcd(a,b)*b; }
+function exSpaced(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' '); }
+function exTerm(c,v,e){ if(e===0) return String(c); const cs=(c===1)?'':String(c); return cs+v+(e===1?'':'^'+e); }
+function exLin(a,v,b){ let s=(a===1?'':(a===-1?'-':String(a)))+v; if(b>0) s+=' + '+b; else if(b<0) s+=' - '+Math.abs(b); return s; }
+function exQuad(a2,b,c,v){
+  let s=(a2===1?'':String(a2))+v+'^2';
+  if(b!==0) s+=(b>0?' + ':' - ')+(Math.abs(b)===1?'':Math.abs(b))+v;
+  if(c!==0) s+=(c>0?' + ':' - ')+Math.abs(c);
+  return s;
+}
+function exFrac(c,v,den){ const cs=(c===1)?'':String(c); return den===1 ? cs+v : cs+v+'/'+den; }
+function exSci(mant,e){ return mant+' × 10^'+e; }
+function exDecStr(n,scale){ return String(Number((n/Math.pow(10,scale)).toFixed(scale))); }
+function exNormTenths(Pt){ return Pt>=100 ? {mant:exDecStr(Pt,2), shift:1} : {mant:exDecStr(Pt,1), shift:0}; }
+function exCo(c,v){ return c===1 ? v : (c===-1 ? '-'+v : c+v); }
+function exN(n){ return n<0 ? '('+n+')' : String(n); }
+function exPt(x,y){ return '('+x+', '+y+')'; }
+function exEq(m,b){ const ms=(m===1?'':(m===-1?'-':String(m))); return 'y = '+ms+'x'+(b===0?'':(b<0?' - '+Math.abs(b):' + '+b)); }
+function exDbg(q,chk){ q._chk=chk; return q; }
+function exMcq(T,diff,prompt,correct,cands,padFn,expl,chk){
+  const wr = uniqueStrOptions(correct, cands, padFn);
+  return exDbg(mcqQ(T,diff,prompt,correct,wr,expl), chk);
+}
+function exNum(T,diff,prompt,ans,tol,expl,chk){
+  return exDbg(numQ(T,diff,prompt,ans,{tolerance:tol||0.001, explanation:expl}), chk);
+}
+function exDecimals(v){ return (String(v).split('.')[1]||'').length; }
+
+/* ---------- Indices ---------- */
+M9.examIndices = (diff) => {
+  const T='Indices';
+  const v=pick(['x','y','m','p','k','t']);
+  if(diff==='basic'){
+    const kind=pick(['mul','div','zero']);
+    if(kind==='mul'){
+      const a=rnd(2,7), b=rnd(2,7), m=rnd(2,8), n=rnd(2,8);
+      const ans=exTerm(a*b,v,m+n);
+      return exMcq(T,diff,`Simplify ${exTerm(a,v,m)} × ${exTerm(b,v,n)}`, ans,
+        [exTerm(a+b,v,m+n), exTerm(a*b,v,m*n), exTerm(a+b,v,m*n), exTerm(a*b,v,m+n+1)], i=>exTerm(a*b+i,v,m+n),
+        `Multiply the numbers (${a} × ${b} = ${a*b}) and add the powers (${m} + ${n} = ${m+n}).`,
+        {kind:'alg', v, stem:`(${a}*${v}^${m})*(${b}*${v}^${n})`, ans});
+    }
+    if(kind==='div'){
+      const a=rnd(2,6), c=rnd(2,6), n=rnd(1,3), m=rnd(n+2,n+6);
+      const ans=exTerm(c,v,m-n);
+      return exMcq(T,diff,`Simplify ${exTerm(a*c,v,m)} ÷ ${exTerm(a,v,n)}`, ans,
+        [exTerm(c,v,m+n), exTerm(a*c-a,v,m-n), exTerm(a*c,v,m-n), exTerm(c,v,m*n)], i=>exTerm(c+i,v,m-n),
+        `Divide the numbers (${a*c} ÷ ${a} = ${c}) and subtract the powers (${m} - ${n} = ${m-n}).`,
+        {kind:'alg', v, stem:`(${a*c}*${v}^${m})/(${a}*${v}^${n})`, ans});
+    }
+    const a=rnd(2,9), b=rnd(2,9), c=rnd(2,9);
+    return exNum(T,diff,`Evaluate ${a}^0 + ${b} × ${c}^0`, 1+b, 0.001,
+      `Any non-zero number to the power 0 equals 1, so 1 + ${b} × 1 = ${1+b}.`, {kind:'num', expr:`${a}**0+${b}*${c}**0`});
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['pow','combo','neg']);
+    if(kind==='pow'){
+      const a=rnd(2,4), m=rnd(2,5), n=rnd(2,4);
+      const ans=exTerm(a**n,v,m*n);
+      return exMcq(T,diff,`Simplify (${exTerm(a,v,m)})^${n}`, ans,
+        [exTerm(a*n,v,m*n), exTerm(a**n,v,m+n), exTerm(a,v,m*n), exTerm(a**n,v,m*n+1)], i=>exTerm(a**n+i,v,m*n),
+        `Raise every part to the power ${n}: ${a}^${n} = ${a**n} and (${v}^${m})^${n} = ${v}^${m*n} (multiply the powers).`,
+        {kind:'alg', v, stem:`(${a}*${v}^${m})^${n}`, ans});
+    }
+    if(kind==='combo'){
+      const c=pick([2,3,4]), a=c*rnd(1,3), b=rnd(2,4), m=rnd(2,6), n=rnd(2,5), p=rnd(1,m+n-2);
+      const coef=a*b/c, e=m+n-p, ans=exTerm(coef,v,e);
+      return exMcq(T,diff,`Simplify (${exTerm(a,v,m)} × ${exTerm(b,v,n)}) ÷ ${exTerm(c,v,p)}`, ans,
+        [exTerm(coef,v,m+n+p), exTerm(coef,v,m*n-p), exTerm(a*b-c,v,e), exTerm(coef,v,e+1)], i=>exTerm(coef+i,v,e),
+        `Top line: ${a} × ${b} = ${a*b} and ${v}^${m} × ${v}^${n} = ${v}^${m+n}. Then divide: ${a*b} ÷ ${c} = ${coef} and ${exTerm(1,v,m+n)} ÷ ${exTerm(1,v,p)} = ${exTerm(1,v,e)}.`,
+        {kind:'alg', v, stem:`((${a}*${v}^${m})*(${b}*${v}^${n}))/(${c}*${v}^${p})`, ans});
+    }
+    const b=rnd(2,5), n=rnd(1,3), ans=`1/${b**n}`;
+    return exMcq(T,diff,`What is the value of ${b}^(-${n})?`, ans,
+      [`-${b**n}`, `-${b*n}`, `1/${b*n}`, `${b**n}`], i=>`1/${b**n+i}`,
+      `A negative power means 1 over the positive power: ${b}^(-${n}) = 1/${n===1?b:b+'^'+n} = 1/${b**n}.`,
+      {kind:'value', val:Math.pow(b,-n), ans});
+  }
+  const kind=pick(['comp','dec','zero']);
+  if(kind==='comp'){
+    const [a,n,cs]=pick([[2,2,[2,4]],[2,3,[2,4,8]],[3,2,[3,9]],[3,3,[3,9,27]]]);
+    const c=pick(cs), m=rnd(2,4), p=rnd(1,m*n-2);
+    const coef=a**n/c, e=m*n-p, ans=exTerm(coef,v,e);
+    return exMcq(T,diff,`Simplify (${exTerm(a,v,m)})^${n} ÷ ${exTerm(c,v,p)}`, ans,
+      [exTerm(coef,v,m*n+p), exTerm(coef,v,m+n-p), exTerm(a**n,v,e), exTerm(a*n,v,e)], i=>exTerm(coef+i,v,e),
+      `(${exTerm(a,v,m)})^${n} = ${exTerm(a**n,v,m*n)}. Then divide by ${exTerm(c,v,p)}: ${a**n} ÷ ${c} = ${coef} and ${exTerm(1,v,m*n)} ÷ ${exTerm(1,v,p)} = ${exTerm(1,v,e)}.`,
+      {kind:'alg', v, stem:`((${a}*${v}^${m})^${n})/(${c}*${v}^${p})`, ans});
+  }
+  if(kind==='dec'){
+    const [b,n]=pick([[2,1],[2,2],[2,3],[2,4],[4,1],[4,2],[5,1],[5,2],[5,3],[10,1],[10,2],[10,3]]);
+    const val=1/Math.pow(b,n), dec=exDecimals(val);
+    return exNum(T,diff,`Write ${b}^(-${n}) as a decimal.`, val, 0.5*Math.pow(10,-dec),
+      `A negative power means 1 over the positive power: ${b}^(-${n}) = 1/${n===1?b:b+'^'+n} = ${val}.`, {kind:'num', expr:`${b}**(-${n})`});
+  }
+  const a=rnd(2,6), m=rnd(2,5), b=rnd(2,6), c=rnd(2,6);
+  return exNum(T,diff,`What is the value of ${b}(${exTerm(a,v,m)})^0 + ${c}${v}^0, where ${v} is not 0?`, b+c, 0.001,
+    `Anything (except 0) to the power 0 equals 1. So ${b} × 1 + ${c} × 1 = ${b+c}.`, {kind:'num', expr:`${b}*1+${c}*1`});
+};
+
+/* ---------- Numbers of any magnitude ---------- */
+function exSigFigQ(diff){
+  const T='Numbers of any magnitude';
+  for(let tries=0; tries<200; tries++){
+    const D=[rnd(1,9),rnd(0,9),rnd(0,9),rnd(0,9),rnd(0,9),rnd(1,9)].join('');
+    const s = diff==='basic' ? 3 : pick([2,3,4]);
+    const lead = diff==='basic' ? 0 : pick([0,0,1,2,3]);
+    const k = pick([1,2,3]);
+    const head=D.slice(0,s), nextDigit=Number(D[s]);
+    const R=Number(head)+(nextDigit>=5?1:0);
+    if(String(R).length>s) continue;
+    let shown, val, dec;
+    if(lead>0){ shown='0.'+'0'.repeat(lead)+D; dec=lead+s; val=R/Math.pow(10,dec); }
+    else { shown=D.slice(0,k)+'.'+D.slice(k); if(s>k){ dec=s-k; val=R/Math.pow(10,dec); } else { dec=0; val=R*Math.pow(10,k-s); } }
+    const expl=`The first ${s} significant figures are ${head.split('').join(', ')}${lead>0?' (leading zeros are not significant)':''}. The next digit is ${D[s]}, so round ${nextDigit>=5?'up':'down'}: ${val}.`;
+    return exNum(T,diff,`Round ${shown} to ${s} significant figures.`, val, dec>0?0.5*Math.pow(10,-dec):0.001, expl, {kind:'sigfig', shown, s});
+  }
+  throw new Error('sigfig generator failed');
+}
+M9.examMagnitude = (diff) => {
+  const T='Numbers of any magnitude';
+  if(diff==='basic'){
+    const kind=pick(['toSci','toOrd','sigfig']);
+    if(kind==='sigfig') return exSigFigQ(diff);
+    const d1=rnd(1,9), d2=rnd(1,9), e=rnd(3,8), mant=`${d1}.${d2}`;
+    const N=Number(`${d1}${d2}`)*Math.pow(10,e-1);
+    if(kind==='toSci'){
+      const ans=exSci(mant,e);
+      return exMcq(T,diff,`Write ${exSpaced(N)} in scientific notation.`, ans,
+        [exSci(mant,e-1), exSci(mant,e+1), exSci(mant,-e), exSci(mant,e-2)], i=>exSci(mant,e+1+i),
+        `Move the decimal point ${e} places to get a number between 1 and 10: ${mant} × 10^${e}.`,
+        {kind:'sci', val:N, ans});
+    }
+    const ans=exSpaced(N);
+    return exMcq(T,diff,`Write ${exSci(mant,e)} as an ordinary number.`, ans,
+      [exSpaced(N*10), exSpaced(N/10), exSpaced(N*100), exSpaced(N/100)], i=>exSpaced(N*Math.pow(10,i+2)),
+      `10^${e} means move the decimal point ${e} places to the right: ${ans}.`,
+      {kind:'ord', val:N, ans});
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['toSciSmall','toDecSmall','multiply','sigfig']);
+    if(kind==='sigfig') return exSigFigQ(diff);
+    if(kind==='multiply'){
+      const at=rnd(11,99), b=rnd(2,9), m=rnd(2,9), n=rnd(2,9);
+      const nm=exNormTenths(at*b), e=m+n+nm.shift, ans=exSci(nm.mant,e);
+      const val=(at/10)*b*Math.pow(10,m+n);
+      return exMcq(T,diff,`Calculate (${exDecStr(at,1)} × 10^${m}) × (${b} × 10^${n}). Give your answer in scientific notation.`, ans,
+        [exSci(nm.mant,e+1), exSci(nm.mant,e-1), exSci(nm.mant,m*n), exSci(nm.mant,m+n+(nm.shift?0:1))], i=>exSci(nm.mant,e+2+i),
+        `Multiply the numbers: ${exDecStr(at,1)} × ${b} = ${exDecStr(at*b,1)}. Add the powers: ${m} + ${n} = ${m+n}. ${nm.shift?`${exDecStr(at*b,1)} × 10^${m+n} is not in scientific notation (the first number must be between 1 and 10), so write it as ${nm.mant} × 10^${e}.`:`So the answer is ${ans}.`}`,
+        {kind:'sci', val, ans});
+    }
+    const d1=rnd(1,9), d2=rnd(1,9), k=rnd(2,6), mant=`${d1}.${d2}`;
+    const decWith=z=>'0.'+'0'.repeat(z)+`${d1}${d2}`;
+    const dec=decWith(k-1), val=Number(dec);
+    if(kind==='toSciSmall'){
+      const ans=exSci(mant,-k);
+      return exMcq(T,diff,`Write ${dec} in scientific notation.`, ans,
+        [exSci(mant,k), exSci(mant,-(k-1)), exSci(mant,-(k+1)), exSci(mant,-(k+2))], i=>exSci(mant,-(k+2+i)),
+        `Move the decimal point ${k} places to the right to get ${mant}. Moving right means the power is negative: ${mant} × 10^-${k}.`,
+        {kind:'sci', val, ans});
+    }
+    const ctx=pick([['The mass of a grain of sand is about','g'],['The width of a human hair is about','mm'],['The mass of a dust particle is about','g'],['The thickness of a soap bubble is about','mm']]);
+    const ans=`${dec} ${ctx[1]}`;
+    return exMcq(T,diff,`${ctx[0]} ${exSci(mant,-k)} ${ctx[1]}. Written as a decimal, this is`, ans,
+      [`${decWith(k)} ${ctx[1]}`, `${decWith(k-2)} ${ctx[1]}`, `${exSpaced(Number(`${d1}${d2}`)*Math.pow(10,k-1))} ${ctx[1]}`, `${decWith(k+1)} ${ctx[1]}`],
+      i=>`${decWith(k+1+i)} ${ctx[1]}`,
+      `10^-${k} means move the decimal point ${k} places to the left: ${dec}.`,
+      {kind:'ordval', val, ans});
+  }
+  const kind=pick(['count','lightyear','sciSig']);
+  if(kind==='count'){
+    const b=pick([2,4,5,8]), j=rnd(1,3), k=rnd(j+3,Math.min(8,j+6));
+    const count=Math.pow(10,k-j)/b, tot=exDecStr(1,j);
+    return exNum(T,diff,`A bacterium is ${b} × 10^-${k} m long. How many of these bacteria, placed end to end, would stretch ${tot} m?`, count, 0.001,
+      `${tot} ÷ (${b} × 10^-${k}) = ${count}. (Divide the numbers, then subtract the powers of 10.)`, {kind:'num', expr:`${tot}/(${b}*10**-${k})`});
+  }
+  if(kind==='lightyear'){
+    const n=pick([2,3,4,6,8]), nm=exNormTenths(n*95), e=12+nm.shift, ans=`${nm.mant} × 10^${e} km`;
+    return exMcq(T,diff,`A light-year is about 9.5 × 10^12 km. A star is ${n} light-years away. How far away is it, in scientific notation?`, ans,
+      [`${nm.mant} × 10^${e-1} km`, `${nm.mant} × 10^${e+1} km`, `${nm.mant} × 10^${e-2} km`, `${nm.mant} × 10^${e+2} km`], i=>`${nm.mant} × 10^${e+2+i} km`,
+      `${n} × 9.5 = ${exDecStr(n*95,1)}, so the distance is ${exDecStr(n*95,1)} × 10^12 km. Write ${exDecStr(n*95,1)} as ${nm.mant} × 10: ${nm.mant} × 10^${e} km.`,
+      {kind:'sci', val:n*9.5e12, ans});
+  }
+  for(let tries=0; tries<200; tries++){
+    const D=[rnd(1,9),rnd(0,9),rnd(0,9),rnd(0,9)], k=rnd(2,5);
+    const R=Number(`${D[0]}${D[1]}`)+(D[2]>=5?1:0);
+    if(R>99) continue;
+    if(D[2]===5 && D[3]===0) continue;
+    const shown='0.'+'0'.repeat(k-1)+D.join(''), mant=`${Math.floor(R/10)}.${R%10}`, ans=exSci(mant,-k);
+    return exMcq(T,diff,`Write ${shown} in scientific notation, correct to 2 significant figures.`, ans,
+      [exSci(`${D[0]}.${D[1]}`,-k), exSci(mant,-(k-1)), exSci(mant,-(k+1)), ...(D[2]!==0?[exSci(`${D[0]}.${D[1]}${D[2]}`,-k)]:[])], i=>exSci(mant,-(k+1+i)),
+      `Round to 2 significant figures: ${D[0]}${D[1]}|${D[2]}... rounds ${D[2]>=5?'up':'down'} to ${R}. Then move the decimal point ${k} places: ${ans}.`,
+      {kind:'sciDec', shown, ans});
+  }
+  throw new Error('sciSig generator failed');
+};
+
+/* ---------- Algebraic techniques ---------- */
+M9.examAlgebra = (diff) => {
+  const T='Algebraic techniques';
+  const v=pick(['x','y','m','p','k','t']);
+  const sg=()=>pick([1,-1]);
+  const sgn=(s)=>s>0?'+':'-';
+  if(diff==='basic'){
+    const kind=pick(['expand','expand2','like']);
+    if(kind==='expand'){
+      const a=rnd(2,9), b=rnd(1,9), s=sg(), ans=exLin(a,v,s*a*b);
+      return exMcq(T,diff,`Expand ${a}(${v} ${sgn(s)} ${b})`, ans,
+        [exLin(a,v,s*b), exLin(1,v,s*a*b), exLin(a,v,-s*a*b), exLin(a,v,s*(a+b))], i=>exLin(a,v,s*a*b+i),
+        `Multiply both terms inside the bracket by ${a}: ${a} × ${v} = ${a}${v} and ${a} × ${s*b} = ${s*a*b}.`,
+        {kind:'alg', v, stem:`${a}*(${v}${sgn(s)}${b})`, ans});
+    }
+    if(kind==='expand2'){
+      const a=rnd(2,6), b=rnd(2,5), c=rnd(1,7), s=sg(), ans=exLin(a*b,v,s*a*c);
+      return exMcq(T,diff,`Expand ${a}(${b}${v} ${sgn(s)} ${c})`, ans,
+        [exLin(a*b,v,s*c), exLin(a+b,v,s*a*c), exLin(a*b,v,-s*a*c), exLin(a*b,v,s*(a+c))], i=>exLin(a*b,v,s*a*c+i),
+        `Multiply both terms inside the bracket by ${a}: ${a} × ${b}${v} = ${a*b}${v} and ${a} × ${s*c} = ${s*a*c}.`,
+        {kind:'alg', v, stem:`${a}*(${b}*${v}${sgn(s)}${c})`, ans});
+    }
+    let a,b,c,d; do { a=rnd(2,9); b=rnd(1,9); c=rnd(2,9); d=rnd(1,9); } while(b===d);
+    const ans=exLin(a+c,v,b-d);
+    return exMcq(T,diff,`Simplify ${a}${v} + ${b} + ${c}${v} - ${d}`, ans,
+      [exLin(a+c,v,b+d), exLin(a+c,v,d-b), exLin(a*c,v,b-d), exLin(Math.abs(a-c)||1,v,b-d)], i=>exLin(a+c,v,b-d+i),
+      `Collect like terms: ${a}${v} + ${c}${v} = ${a+c}${v}, and ${b} - ${d} = ${b-d}.`,
+      {kind:'alg', v, stem:`${a}*${v}+${b}+${c}*${v}-${d}`, ans});
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['expSimp','expSimp2','fracAdd']);
+    if(kind==='expSimp'){
+      let a,b,c,d; do { a=rnd(2,6); b=rnd(1,7); c=rnd(2,6); d=rnd(1,7); } while(a*b===c*d);
+      const ans=exLin(a+c,v,a*b-c*d);
+      return exMcq(T,diff,`Expand and simplify ${a}(${v} + ${b}) + ${c}(${v} - ${d})`, ans,
+        [exLin(a+c,v,a*b+c*d), exLin(a+c,v,b-d), exLin(a*c,v,a*b-c*d), exLin(a+c-1,v,a*b-c*d)], i=>exLin(a+c,v,a*b-c*d+i),
+        `${a}(${v} + ${b}) = ${a}${v} + ${a*b} and ${c}(${v} - ${d}) = ${c}${v} - ${c*d}. Add: ${ans}.`,
+        {kind:'alg', v, stem:`${a}*(${v}+${b})+${c}*(${v}-${d})`, ans});
+    }
+    if(kind==='expSimp2'){
+      const a=rnd(3,7), c=rnd(2,a-1), b=rnd(1,7), d=rnd(1,7), ans=exLin(a-c,v,a*b+c*d);
+      return exMcq(T,diff,`Expand and simplify ${a}(${v} + ${b}) - ${c}(${v} - ${d})`, ans,
+        [exLin(a-c,v,a*b-c*d), exLin(a+c,v,a*b+c*d), exLin(a-c,v,b+d), exLin(a-c+1,v,a*b+c*d)], i=>exLin(a-c,v,a*b+c*d+i),
+        `${a}(${v} + ${b}) = ${a}${v} + ${a*b}. -${c}(${v} - ${d}) = -${c}${v} + ${c*d} (a negative times a negative is positive). Add: ${ans}.`,
+        {kind:'alg', v, stem:`${a}*(${v}+${b})-${c}*(${v}-${d})`, ans});
+    }
+    const dens=[2,3,4,5,6,8,10];
+    let n1,n2,d1,d2;
+    do { n1=rnd(1,4); n2=rnd(1,4); d1=pick(dens); d2=pick(dens); } while(d1===d2);
+    const L=exLcm(d1,d2), c=n1*(L/d1)+n2*(L/d2), g=exGcd(c,L), cc=c/g, LL=L/g;
+    const ans=exFrac(cc,v,LL);
+    const wrong=[[n1+n2,d1+d2],[n1+n2,L],[n1*n2,d1*d2],[cc+1,LL]].filter(([cx,dx])=>cx*LL!==cc*dx).map(([cx,dx])=>exFrac(cx,v,dx));
+    return exMcq(T,diff,`Simplify ${exFrac(n1,v,d1)} + ${exFrac(n2,v,d2)}`, ans, wrong, i=>exFrac(cc+i+1,v,LL+i),
+      `Use a common denominator of ${L}: ${exFrac(n1*(L/d1),v,L)} + ${exFrac(n2*(L/d2),v,L)} = ${exFrac(c,v,L)}${g>1?`, which simplifies to ${ans}`:''}.`,
+      {kind:'alg', v, stem:`${n1}*${v}/${d1}+${n2}*${v}/${d2}`, ans});
+  }
+  const kind=pick(['fracBin','fracSub','binom','binomCoef']);
+  const dens=[2,3,4,5,6,8];
+  if(kind==='fracBin' || kind==='fracSub'){
+    for(let tries=0; tries<500; tries++){
+      const a=rnd(1,4), b=rnd(1,9), c=rnd(1,4), e=rnd(1,9);
+      let d1=pick(dens), d2=pick(dens); if(d1===d2) continue;
+      const L=exLcm(d1,d2), f1=L/d1, f2=L/d2;
+      const plus = kind==='fracBin';
+      const A = plus ? a*f1+c*f2 : a*f1-c*f2;
+      const B = plus ? b*f1-e*f2 : b*f1-e*f2;
+      if(A<=0 || B===0 || exGcd(exGcd(A,Math.abs(B)),L)!==1) continue;
+      const ans=`(${exLin(A,v,B)})/${L}`;
+      const sec = plus ? `(${exCo(c,v)} - ${e})/${d2}` : `(${exCo(c,v)} + ${e})/${d2}`;
+      const prompt = plus ? `Simplify (${exCo(a,v)} + ${b})/${d1} + ${sec}` : `Simplify (${exCo(a,v)} + ${b})/${d1} - ${sec}`;
+      const wrongs = plus
+        ? [`(${exLin(A,v,b*f1+e*f2)})/${L}`, `(${exLin(a+c,v,b-e)})/${L}`, `(${exLin(a+c,v,b-e)})/${d1+d2}`, `(${exLin(a+c*f2,v,b-e)})/${L}`]
+        : [`(${exLin(A,v,b*f1+e*f2)})/${L}`, `(${exLin(a*f1+c*f2,v,b*f1-e*f2)})/${L}`, `(${exLin(a-c,v,b-e)})/${d1+d2}`, `(${exLin(A,v,B)})/${d1}`];
+      const stem = plus ? `(${a}*${v}+${b})/${d1}+(${c}*${v}-${e})/${d2}` : `(${a}*${v}+${b})/${d1}-(${c}*${v}+${e})/${d2}`;
+      const expl = plus
+        ? `Common denominator ${L}: (${exLin(a*f1,v,b*f1)})/${L} + (${exLin(c*f2,v,-e*f2)})/${L} = ${ans}.`
+        : `Common denominator ${L}: (${exLin(a*f1,v,b*f1)})/${L} - (${exLin(c*f2,v,e*f2)})/${L}. Subtract the whole top line (change both signs): ${ans}.`;
+      return exMcq(T,diff,prompt, ans, wrongs, i=>`(${exLin(A+i,v,B)})/${L}`, expl, {kind:'alg', v, stem, ans});
+    }
+    throw new Error('fraction generator failed');
+  }
+  if(kind==='binom'){
+    for(let tries=0; tries<200; tries++){
+      const a=rnd(1,9), b=rnd(1,9), s1=sg(), s2=sg();
+      const A=s1*a+s2*b, C=s1*a*s2*b;
+      if(A===0 || C===0) continue;
+      const ans=exQuad(1,A,C,v);
+      return exMcq(T,diff,`Expand and simplify (${v} ${sgn(s1)} ${a})(${v} ${sgn(s2)} ${b})`, ans,
+        [exQuad(1,0,C,v), exQuad(1,A,-C,v), exQuad(1,Math.abs(s1*a)+Math.abs(s2*b),C,v), exQuad(1,-A,C,v)], i=>exQuad(1,A+i,C,v),
+        `Multiply each pair: ${v} × ${v} = ${v}^2, ${v} × ${exN(s2*b)} = ${exCo(s2*b,v)}, ${exN(s1*a)} × ${v} = ${exCo(s1*a,v)}, ${exN(s1*a)} × ${exN(s2*b)} = ${C}. Collect like terms: ${ans}.`,
+        {kind:'alg', v, stem:`(${v}${sgn(s1)}${a})*(${v}${sgn(s2)}${b})`, ans});
+    }
+  }
+  const p=rnd(2,4), a=rnd(1,6), b=rnd(1,6), ans=exQuad(p,p*b+a,a*b,v);
+  return exMcq(T,diff,`Expand and simplify (${p}${v} + ${a})(${v} + ${b})`, ans,
+    [exQuad(p,a+b,a*b,v), exQuad(p,p*b+a,a+b,v), exQuad(1,p*b+a,a*b,v), exQuad(p,p*a+b,a*b,v)], i=>exQuad(p,p*b+a+i,a*b,v),
+    `${p}${v} × ${v} = ${p}${v}^2, ${p}${v} × ${b} = ${p*b}${v}, ${a} × ${v} = ${exCo(a,v)}, ${a} × ${b} = ${a*b}. Collect like terms: ${ans}.`,
+    {kind:'alg', v, stem:`(${p}*${v}+${a})*(${v}+${b})`, ans});
+};
+
+/* ---------- Equations (up to 3 steps, at most one algebraic fraction) ---------- */
+M9.examEquations = (diff) => {
+  const T='Equations';
+  const mk=(prompt,x0,eq,expl)=>exNum(T,diff,prompt,x0,0.001,expl,{kind:'eq', eq});
+  const side=(a,b)=>`${a===1?'':a}x ${b<0?'- '+Math.abs(b):'+ '+b}`;
+  if(diff==='basic'){
+    const kind=pick(['plus','minus','frac']);
+    if(kind==='plus'){
+      const x0=rnd(1,12), a=rnd(2,9), b=rnd(1,15), c=a*x0+b;
+      return mk(`Solve ${a}x + ${b} = ${c}. What is x?`, x0, `${a}*x+${b}=${c}`, `Subtract ${b} from both sides: ${a}x = ${c-b}. Divide by ${a}: x = ${x0}.`);
+    }
+    if(kind==='minus'){
+      const x0=rnd(2,12), a=rnd(2,9), b=rnd(1,a*x0-1), c=a*x0-b;
+      return mk(`Solve ${a}x - ${b} = ${c}. What is x?`, x0, `${a}*x-${b}=${c}`, `Add ${b} to both sides: ${a}x = ${c+b}. Divide by ${a}: x = ${x0}.`);
+    }
+    const d=rnd(2,9), q=rnd(1,9), b=rnd(1,9), c=b+q, x0=d*q;
+    return mk(`Solve x/${d} + ${b} = ${c}. What is x?`, x0, `x/${d}+${b}=${c}`, `Subtract ${b}: x/${d} = ${q}. Multiply both sides by ${d}: x = ${x0}.`);
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['bracket','both','fracB','coefFrac']);
+    if(kind==='bracket'){
+      const x0=rnd(3,12), a=rnd(2,6), minus=pick([true,false]), b=minus?rnd(1,x0-1):rnd(1,9);
+      const c=a*(minus?x0-b:x0+b);
+      return mk(`Solve ${a}(x ${minus?'-':'+'} ${b}) = ${c}. What is x?`, x0, `${a}*(x${minus?'-':'+'}${b})=${c}`,
+        `Divide both sides by ${a}: x ${minus?'-':'+'} ${b} = ${c/a}. ${minus?'Add':'Subtract'} ${b}: x = ${x0}.`);
+    }
+    if(kind==='both'){
+      for(let tries=0; tries<500; tries++){
+        const x0=rnd(1,10), a=rnd(3,9), c=rnd(1,a-1), b=rnd(-9,9), d=(a-c)*x0+b;
+        if(b===0 || d===0 || Math.abs(d)>30) continue;
+        return mk(`Solve ${side(a,b)} = ${side(c,d)}. What is x?`, x0, `${a}*x+(${b})=${c}*x+(${d})`,
+          `Subtract ${exCo(c,'x')} from both sides: ${side(a-c,b)} = ${d}. ${b<0?'Add '+(-b):'Subtract '+b}: ${exCo(a-c,'x')} = ${d-b}.${a-c===1?'':` Divide by ${a-c}: x = ${x0}.`}`);
+      }
+    }
+    if(kind==='fracB'){
+      const d=rnd(2,9), c=rnd(2,9), minus=pick([true,false]), b=minus?rnd(1,9):rnd(1,c*d-1);
+      const x0=minus?c*d+b:c*d-b;
+      return mk(`Solve (x ${minus?'-':'+'} ${b})/${d} = ${c}. What is x?`, x0, `(x${minus?'-':'+'}${b})/${d}=${c}`,
+        `Multiply both sides by ${d}: x ${minus?'-':'+'} ${b} = ${c*d}. ${minus?'Add':'Subtract'} ${b}: x = ${x0}.`);
+    }
+    const q=rnd(1,8), d=rnd(2,7), a=rnd(2,5), x0=d*q, c=a*q;
+    return mk(`Solve ${a}x/${d} = ${c}. What is x?`, x0, `${a}*x/${d}=${c}`, `Multiply both sides by ${d}: ${a}x = ${c*d}. Divide by ${a}: x = ${x0}.`);
+  }
+  const kind=pick(['fracFull','fracFull2','bracketBoth']);
+  if(kind==='fracFull'){
+    for(let tries=0; tries<500; tries++){
+      const x0=rnd(1,10), a=rnd(2,5), d=rnd(2,6), t=rnd(1,6), b=d*t-a*x0, e=rnd(1,8);
+      if(b<1 || b>12) continue;
+      const f=e+t;
+      return mk(`Solve (${a}x + ${b})/${d} + ${e} = ${f}. What is x?`, x0, `(${a}*x+${b})/${d}+${e}=${f}`,
+        `Subtract ${e}: (${a}x + ${b})/${d} = ${t}. Multiply by ${d}: ${a}x + ${b} = ${d*t}. Subtract ${b}: ${a}x = ${d*t-b}. Divide by ${a}: x = ${x0}.`);
+    }
+  }
+  if(kind==='fracFull2'){
+    for(let tries=0; tries<500; tries++){
+      const x0=rnd(2,12), a=rnd(2,5), d=rnd(2,6), t=rnd(1,6), b=a*x0-d*t, e=rnd(1,8);
+      if(b<1 || b>12) continue;
+      const f=t-e;
+      if(f<1) continue;
+      return mk(`Solve (${a}x - ${b})/${d} - ${e} = ${f}. What is x?`, x0, `(${a}*x-${b})/${d}-${e}=${f}`,
+        `Add ${e}: (${a}x - ${b})/${d} = ${t}. Multiply by ${d}: ${a}x - ${b} = ${d*t}. Add ${b}: ${a}x = ${d*t+b}. Divide by ${a}: x = ${x0}.`);
+    }
+  }
+  for(let tries=0; tries<500; tries++){
+    const x0=rnd(1,10), a=rnd(3,7), c=rnd(1,a-1), b=rnd(1,6), d=(a-c)*x0+a*b;
+    if(d>40) continue;
+    return mk(`Solve ${a}(x + ${b}) = ${exCo(c,'x')} + ${d}. What is x?`, x0, `${a}*(x+${b})=${c}*x+${d}`,
+      `Expand the bracket: ${a}x + ${a*b} = ${exCo(c,'x')} + ${d}. Subtract ${exCo(c,'x')}: ${exCo(a-c,'x')} + ${a*b} = ${d}. Subtract ${a*b}: ${exCo(a-c,'x')} = ${d-a*b}.${a-c===1?'':` Divide by ${a-c}: x = ${x0}.`}`);
+  }
+  throw new Error('equation generator failed');
+};
+
+/* ---------- Linear relationships ---------- */
+M9.examLinear = (diff) => {
+  const T='Linear relationships';
+  const nz=(lo,hi)=>{ let n; do { n=rnd(lo,hi); } while(n===0); return n; };
+  if(diff==='basic'){
+    const kind=pick(['mid','grad','read']);
+    if(kind==='mid'){
+      const mx=rnd(-8,8), my=rnd(-8,8), dx=rnd(1,6), dy=rnd(1,6);
+      const x1=mx-dx, y1=my-dy, x2=mx+dx, y2=my+dy, ans=exPt(mx,my);
+      return exMcq(T,diff,`Find the midpoint of A(${x1}, ${y1}) and B(${x2}, ${y2}).`, ans,
+        [exPt(x1+x2,y1+y2), exPt(x2-x1,y2-y1), exPt(mx+1,my), exPt(mx,my+1), exPt(my,mx)], i=>exPt(mx+i+1,my+i),
+        `Midpoint = ((${x1} + ${exN(x2)})/2, (${y1} + ${exN(y2)})/2) = (${mx}, ${my}).`, {kind:'mid', p:[x1,y1], q:[x2,y2], ans});
+    }
+    if(kind==='grad'){
+      const g=nz(-4,5), x1=rnd(-5,5), y1=rnd(-5,5), r=rnd(1,4);
+      let P=[x1,y1], Q=[x1+r,y1+g*r];
+      if(pick([true,false])){ const t=P; P=Q; Q=t; }
+      return exNum(T,diff,`Find the gradient of the line through (${P[0]}, ${P[1]}) and (${Q[0]}, ${Q[1]}).`, g, 0.001,
+        `Gradient = rise ÷ run = (${Q[1]} - ${exN(P[1])}) ÷ (${Q[0]} - ${exN(P[0])}) = ${Q[1]-P[1]} ÷ ${Q[0]-P[0]} = ${g}.`, {kind:'grad', p:P, q:Q});
+    }
+    const m=nz(-5,5), b=nz(-9,9), ask=pick(['gradient','y-intercept']);
+    return exNum(T,diff,`State the ${ask} of the line ${exEq(m,b)}.`, ask==='gradient'?m:b, 0.001,
+      `In y = mx + b, m is the gradient and b is the y-intercept. Here m = ${m} and b = ${b}.`, {kind:'read', m, b, ask});
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['len','eqMcq','xint','pointOn']);
+    if(kind==='len'){
+      const [a,b,c]=pick([[3,4,5],[6,8,10],[5,12,13],[8,15,17],[9,12,15],[7,24,25]]);
+      const [dx,dy]=pick([[a,b],[b,a]]), sx=pick([1,-1]), sy=pick([1,-1]);
+      const x1=rnd(-6,6), y1=rnd(-6,6), x2=x1+sx*dx, y2=y1+sy*dy;
+      return exNum(T,diff,`Find the length of the interval from (${x1}, ${y1}) to (${x2}, ${y2}).`, c, 0.001,
+        `Horizontal distance = ${dx}, vertical distance = ${dy}. Length = square root of (${dx}^2 + ${dy}^2) = square root of ${dx*dx+dy*dy} = ${c}.`, {kind:'len', p:[x1,y1], q:[x2,y2], dec:0});
+    }
+    if(kind==='eqMcq'){
+      const m=nz(-5,5), b=nz(-8,8), ans=exEq(m,b);
+      return exMcq(T,diff,`Which equation has gradient ${m} and y-intercept ${b}?`, ans,
+        [exEq(b,m), exEq(-m,b), exEq(m,-b), exEq(-m,-b)], i=>exEq(m+i,b),
+        `In y = mx + b, m is the gradient and b is the y-intercept. m = ${m} and b = ${b} gives ${ans}.`, {kind:'text'});
+    }
+    if(kind==='xint'){
+      let m,x0; do { m=nz(-4,4); x0=nz(-6,6); } while(false);
+      const b=-m*x0;
+      return exNum(T,diff,`The line ${exEq(m,b)} crosses the x-axis at what value of x?`, x0, 0.001,
+        `On the x-axis y = 0. So 0 = ${exCo(m,'x')} ${b<0?'- '+Math.abs(b):'+ '+b}, which gives ${exCo(m,'x')} = ${-b}${m===1?'':', so x = '+x0}.`, {kind:'xint', m, b});
+    }
+    const m=nz(-4,4), b=nz(-6,6), x=rnd(-4,4), y=m*x+b, ans=exPt(x,y);
+    const cands=[[x,y-b*2],[y,x],[x,y+1],[x+1,y]].filter(([cx,cy])=>cy!==m*cx+b).map(([cx,cy])=>exPt(cx,cy));
+    return exMcq(T,diff,`Which point lies on the line ${exEq(m,b)}?`, ans, cands, i=>exPt(x+i,y+i+2),
+      `Substitute x = ${x}: y = ${m}(${x}) ${b<0?'- '+Math.abs(b):'+ '+b} = ${y}. So (${x}, ${y}) is on the line.`, {kind:'pointOn', m, b, ans});
+  }
+  const kind=pick(['twoPoints','rearrange','interp','lenDec']);
+  if(kind==='twoPoints'){
+    const m=nz(-4,4), b=nz(-8,8), x1=rnd(-4,3), x2=x1+rnd(1,3), y1=m*x1+b, y2=m*x2+b, ans=exEq(m,b);
+    return exMcq(T,diff,`A line passes through (${x1}, ${y1}) and (${x2}, ${y2}). Which equation represents the line?`, ans,
+      [exEq(m,-b), exEq(-m,b), exEq(b,m), exEq(-m,-b)], i=>exEq(m,b+i+1),
+      `Gradient = (${y2} - ${exN(y1)}) ÷ (${x2} - ${exN(x1)}) = ${m}. Put x = ${x1}, y = ${y1} into y = ${exCo(m,'x')} + b: b = ${y1} - ${exN(m*x1)} = ${b}. So ${ans}.`,
+      {kind:'line', p:[x1,y1], q:[x2,y2]});
+  }
+  if(kind==='rearrange'){
+    const form=pick(['ay','yminus','scaled']);
+    if(form==='ay'){
+      const a=rnd(2,6), c=rnd(-9,15);
+      return exNum(T,diff,`Find the gradient of the line ${a}x + y = ${c}.`, -a, 0.001,
+        `Rearrange to y = mx + b by subtracting ${a}x from both sides: y = -${a}x ${c<0?'- '+Math.abs(c):'+ '+c}. The gradient is -${a}.`, {kind:'rearr', form, a, c});
+    }
+    if(form==='yminus'){
+      const a=rnd(2,6), c=rnd(1,15);
+      return exNum(T,diff,`Find the gradient of the line y - ${a}x = ${c}.`, a, 0.001,
+        `Add ${a}x to both sides: y = ${a}x + ${c}. The gradient is ${a}.`, {kind:'rearr', form, a, c});
+    }
+    const a=rnd(2,4), q=nz(-4,4), b=a*q, c=nz(-9,12);
+    return exNum(T,diff,`Find the gradient of the line ${a}y = ${b}x ${c<0?'- '+Math.abs(c):'+ '+c}.`, q, 0.001,
+      `Divide everything by ${a}: y = ${exCo(q,'x')} ${c<0?'- ':'+ '}${Math.abs(c)}/${a}. The gradient is ${b} ÷ ${a} = ${q}.`, {kind:'rearr', form, a, b, c});
+  }
+  if(kind==='interp'){
+    const ctx=pick([
+      {pre:'A taxi fare is',   unit:'kilometre', plural:'kilometres', v:'k'},
+      {pre:'A plumber charges', unit:'hour',      plural:'hours',      v:'h'},
+      {pre:'A gym membership costs', unit:'week',  plural:'weeks',      v:'w'}]);
+    const m=rnd(2,9), f=rnd(5,60), ask=pick(['gradient','intercept']);
+    const eqs=`C = ${m}${ctx.v} + ${f}`;
+    const rateTxt=`The cost for each extra ${ctx.unit}`;
+    const feeTxt=`The fixed starting fee (the cost when ${ctx.v} = 0)`;
+    const prompt=`${ctx.pre} given by ${eqs}, where C is the cost in dollars and ${ctx.v} is the number of ${ctx.plural}. What does the ${ask==='gradient'?m:f} represent?`;
+    const ans = ask==='gradient' ? rateTxt : feeTxt;
+    const wr = ask==='gradient' ? [feeTxt,'The total cost',`The number of ${ctx.plural}`] : [rateTxt,'The total cost',`The number of ${ctx.plural}`];
+    return exMcq(T,diff,prompt, ans, wr, i=>`Something else (${i})`,
+      ask==='gradient' ? `In C = ${m}${ctx.v} + ${f}, the number multiplying ${ctx.v} is the gradient. It is how much the cost goes up for each extra ${ctx.unit}.`
+                       : `In C = ${m}${ctx.v} + ${f}, the number added on is the y-intercept. It is the cost when ${ctx.v} = 0, the fixed starting fee.`,
+      {kind:'text'});
+  }
+  for(let tries=0; tries<200; tries++){
+    const dx=rnd(1,9), dy=rnd(1,9);
+    if([[3,4],[4,3],[6,8],[8,6],[5,12],[12,5]].some(([p,q])=>p===dx&&q===dy)) continue;
+    const sx=pick([1,-1]), sy=pick([1,-1]), x1=rnd(-6,6), y1=rnd(-6,6), x2=x1+sx*dx, y2=y1+sy*dy;
+    const len=round1(Math.sqrt(dx*dx+dy*dy));
+    return exNum(T,diff,`Find the length of the interval from (${x1}, ${y1}) to (${x2}, ${y2}), correct to 1 decimal place.`, len, 0.05,
+      `Horizontal distance = ${dx}, vertical distance = ${dy}. Length = square root of (${dx}^2 + ${dy}^2) = square root of ${dx*dx+dy*dy} = ${len} (1 decimal place).`, {kind:'len', p:[x1,y1], q:[x2,y2], dec:1});
+  }
+  throw new Error('length generator failed');
+};
+
+/* ---------- Probability (multistage chance experiments) ---------- */
+function exFr(n,d){ const g=exGcd(n,d); return {n:n/g, d:d/g}; }
+function exFrStr(f){ return f.d===1 ? String(f.n) : f.n+'/'+f.d; }
+function exFrAdd(a,b){ return exFr(a.n*b.d+b.n*a.d, a.d*b.d); }
+function exFrMul(a,b){ return exFr(a.n*b.n, a.d*b.d); }
+function exSeqs(labels,k){ let out=['']; for(let i=0;i<k;i++){ const nx=[]; out.forEach(p=>labels.forEach(l=>nx.push(p+l))); out=nx; } return out; }
+function exSeqProb(counts,k,replace,isEvent){
+  let total=exFr(0,1);
+  const labels=Object.keys(counts);
+  (function rec(prefix,remaining,prob){
+    if(prefix.length===k){ if(isEvent(prefix)) total=exFrAdd(total,prob); return; }
+    const n=Object.values(remaining).reduce((a,b)=>a+b,0);
+    labels.forEach(l=>{
+      if(remaining[l]<=0) return;
+      const nr = replace ? remaining : Object.assign({}, remaining, {[l]:remaining[l]-1});
+      rec(prefix+l, nr, exFrMul(prob, exFr(remaining[l], n)));
+    });
+  })('', Object.assign({}, counts), exFr(1,1));
+  return total;
+}
+const EX_FRAC_POOL=['1/2','1/3','1/4','1/6','1/8','1/9','1/12','1/16','1/36','2/3','3/4','3/8','5/8','7/8','5/6','1/5','2/5','3/5','4/5','1/10','3/10','1/20','5/36','1/18','7/36'];
+const EX_COLOURS=[['red','blue'],['green','yellow'],['black','white'],['red','green'],['blue','yellow'],['purple','orange'],['pink','grey']];
+const EX_THINGS=['counters','marbles','beads','tokens'];
+function exCtx(){ const c=pick(EX_COLOURS); return {a:c[0], b:c[1], thing:pick(EX_THINGS)}; }
+// Wrong options are kept to genuine probabilities (between 0 and 1) and, where possible, share the answer's denominator.
+function exProbMcq(T,diff,prompt,counts,k,replace,test,extra,expl){
+  const pat=exSeqs(Object.keys(counts),k).filter(test), patSet=new Set(pat);
+  const f=exSeqProb(counts,k,replace,s=>patSet.has(s));
+  const correct=exFrStr(f);
+  const isProb=str=>{ const q=str.split('/').map(Number); return q.length===2 && q[1]>0 && q[0]>0 && q[0]<q[1]; };
+  const cands=extra.filter(x=>x!==correct && isProb(x));
+  const near=[]; for(let j=1;j<f.d;j++){ near.push(exFrStr(exFr(j,f.d))); }
+  const pool=shuffle(near.filter(x=>x!==correct)).concat(shuffle(EX_FRAC_POOL.filter(x=>x!==correct)));
+  return exMcq(T,diff,prompt,correct,cands,i=>pool[(i-1)%pool.length],typeof expl==='function'?expl(f,pat):expl,{kind:'prob',counts,k,replace,pat,ans:correct});
+}
+function exDiceFaces(n){ const faces={}; for(let i=1;i<=n;i++) faces[String(i)]=1; return faces; }
+M9.examProbability = (diff) => {
+  const T='Probability (multistage)';
+  if(diff==='basic'){
+    const kind=pick(['coins','dice']);
+    if(kind==='coins'){
+      const n=pick([2,3]);
+      const specs = n===2
+        ? [{t:'getting two heads', f:s=>s==='HH'}, {t:'getting two tails', f:s=>s==='TT'}, {t:'getting a head then a tail', f:s=>s==='HT'}, {t:'getting exactly one head', f:s=>(s.match(/H/g)||[]).length===1}, {t:'getting at least one head', f:s=>s.includes('H')}, {t:'getting at least one tail', f:s=>s.includes('T')}]
+        : [{t:'getting three heads', f:s=>s==='HHH'}, {t:'getting exactly two heads', f:s=>(s.match(/H/g)||[]).length===2}, {t:'getting at least one head', f:s=>s.includes('H')}, {t:'getting exactly one tail', f:s=>(s.match(/T/g)||[]).length===1}, {t:'getting heads on the first two tosses', f:s=>s.slice(0,2)==='HH'}, {t:'getting no heads', f:s=>!s.includes('H')}];
+      const sp=pick(specs);
+      return exProbMcq(T,diff,`${n===2?'Two':'Three'} fair coins are tossed. What is the probability of ${sp.t}?`, {H:1,T:1}, n, true, sp.f,
+        ['1/2','1/3',exFrStr(exFr(1,n+1)),exFrStr(exFr(1,2*n))],
+        (f,pat)=>`Each toss has 2 equally likely results, so there are ${2**n} equally likely outcomes. ${pat.length} of them match (${pat.join(', ')}), so the probability is ${pat.length}/${2**n} = ${exFrStr(f)}.`);
+    }
+    const n=pick([4,6,8]), faces=exDiceFaces(n), k=rnd(1,n), t=rnd(1,n-2), u=rnd(3,n);
+    const specs=[
+      {t:`a ${k} both times`, p:x=>x===k}, {t:'an even number both times', p:x=>x%2===0}, {t:'an odd number both times', p:x=>x%2===1},
+      {t:`a number greater than ${t} both times`, p:x=>x>t}, {t:`a number less than ${u} both times`, p:x=>x<u},
+      {t:'the same number both times', f:s=>s[0]===s[1]}, {t:`a 1 on the first roll and a ${k} on the second`, f:s=>s===`1${k}`}];
+    const sp=pick(specs);
+    const test=sp.f || (s=>s.split('').every(c=>sp.p(Number(c))));
+    const extra=[]; if(sp.p){ let one=0; for(let i=1;i<=n;i++) if(sp.p(i)) one++; extra.push(exFrStr(exFr(one,n))); extra.push(exFrStr(exFr(2*one,n))); }
+    return exProbMcq(T,diff,`${n===6?'A fair die':`A fair ${n}-sided die (numbered 1 to ${n})`} is rolled twice. What is the probability of rolling ${sp.t}?`, faces, 2, true, test, extra,
+      (f,pat)=>`There are ${n} × ${n} = ${n*n} equally likely outcomes. ${pat.length} of them match, so the probability is ${pat.length}/${n*n} = ${exFrStr(f)}.`);
+  }
+  if(diff==='intermediate'){
+    const kind=pick(['sum','bagRepl','spinner']);
+    if(kind==='sum'){
+      const mode=pick(['exact','atMost','atLeast']);
+      const t = mode==='exact' ? pick([3,4,5,6,7,8,9,10,11]) : (mode==='atMost' ? rnd(3,10) : rnd(4,11));
+      const test = mode==='exact' ? (s=>(Number(s[0])+Number(s[1]))===t) : (mode==='atMost' ? (s=>(Number(s[0])+Number(s[1]))<=t) : (s=>(Number(s[0])+Number(s[1]))>=t));
+      const phrase = mode==='exact' ? `add to ${t}` : (mode==='atMost' ? `add to ${t} or less` : `add to ${t} or more`);
+      return exProbMcq(T,diff,`Two fair dice are rolled. What is the probability that the numbers ${phrase}?`, exDiceFaces(6), 2, true, test,
+        ['1/36', exFrStr(exFr(1,12)), exFrStr(exFr(1,t))],
+        (f,pat)=>`There are 36 equally likely outcomes. ${pat.length} of them match: ${pat.map(q=>`(${q[0]},${q[1]})`).join(', ')}. ${pat.length}/36 = ${exFrStr(f)}.`);
+    }
+    if(kind==='bagRepl'){
+      const c=exCtx(), n=pick([4,5,10,20,25]), r=rnd(1,n-1), val=(r*r)/(n*n), dec=exDecimals(val);
+      return exNum(T,diff,`A bag has ${r} ${c.a} and ${n-r} ${c.b} ${c.thing}. One is picked, put back, then a second is picked. What is the probability that both are ${c.a}? Give your answer as a decimal.`, val, 0.5*Math.pow(10,-dec),
+        `P(${c.a}) = ${r}/${n} each time (the first one is put back). ${r}/${n} × ${r}/${n} = ${r*r}/${n*n} = ${val}.`,
+        {kind:'bag', counts:{A:r,B:n-r}, k:2, replace:true, pat:['AA'], ansVal:val});
+    }
+    const n=pick([4,5,6,7,8]), faces=exDiceFaces(n), half=n/2|0;
+    const specs=[{t:'an even number both times', f:s=>s.split('').every(c=>Number(c)%2===0)}, {t:'an odd number both times', f:s=>s.split('').every(c=>Number(c)%2===1)},
+                 {t:`a number greater than ${half} both times`, f:s=>s.split('').every(c=>Number(c)>half)}, {t:'the same number both times', f:s=>s[0]===s[1]},
+                 {t:'an even number then an odd number', f:s=>Number(s[0])%2===0 && Number(s[1])%2===1}];
+    const sp=pick(specs);
+    return exProbMcq(T,diff,`A spinner has ${n} equal sections numbered 1 to ${n}. It is spun twice. What is the probability of getting ${sp.t}?`, faces, 2, true, sp.f,
+      [exFrStr(exFr(1,n)), exFrStr(exFr(2,n))],
+      (f,pat)=>`There are ${n} × ${n} = ${n*n} equally likely outcomes. ${pat.length} of them match, so the probability is ${pat.length}/${n*n} = ${exFrStr(f)}.`);
+  }
+  const kind=pick(['noRepl','oneEach','atLeast','three']);
+  const c=exCtx();
+  if(kind==='three'){
+    const n=pick([4,5]), r=rnd(1,n-2), b=n-r;
+    return exProbMcq(T,diff,`A bag has ${r} ${c.a} and ${b} ${c.b} ${c.thing}. One is picked and put back, three times in a row. What is the probability that all three are ${c.a}?`, {A:r,B:b}, 3, true, s=>s==='AAA',
+      [exFrStr(exFr(r*3,n)), exFrStr(exFr(r,n)), exFrStr(exFr(r*r,n*n))],
+      (f)=>`Each pick is ${c.a} with probability ${r}/${n} (it is put back each time). ${r}/${n} × ${r}/${n} × ${r}/${n} = ${exFrStr(f)}.`);
+  }
+  const r=rnd(3,6), b=rnd(2,5), n=r+b;
+  if(kind==='noRepl'){
+    return exProbMcq(T,diff,`A bag has ${r} ${c.a} and ${b} ${c.b} ${c.thing}. Two are picked one after the other WITHOUT putting the first back. What is the probability that both are ${c.a}?`, {A:r,B:b}, 2, false, s=>s==='AA',
+      [exFrStr(exFr(r*r,n*n)), exFrStr(exFr(r,n)), exFrStr(exFr(r*(r-1),n*n)), exFrStr(exFr(r-1,n-1))],
+      (f)=>`First pick: ${r}/${n}. One ${c.a} is gone, so the second pick is ${r-1}/${n-1}. ${r}/${n} × ${r-1}/${n-1} = ${exFrStr(f)}.`);
+  }
+  if(kind==='oneEach'){
+    return exProbMcq(T,diff,`A bag has ${r} ${c.a} and ${b} ${c.b} ${c.thing}. Two are picked one after the other WITHOUT putting the first back. What is the probability of getting one of each colour, in either order?`, {A:r,B:b}, 2, false, s=>s==='AB'||s==='BA',
+      [exFrStr(exFr(2*r*b,n*n)), exFrStr(exFr(r*b,n*(n-1))), exFrStr(exFr(r*b,n*n)), exFrStr(exFr(r+b,n))],
+      (f)=>`${c.a} then ${c.b}: ${r}/${n} × ${b}/${n-1}. ${c.b} then ${c.a}: ${b}/${n} × ${r}/${n-1}. Add the two ways: ${exFrStr(exFr(2*r*b,n*(n-1)))} = ${exFrStr(f)}.`);
+  }
+  return exProbMcq(T,diff,`A bag has ${r} ${c.a} and ${b} ${c.b} ${c.thing}. One is picked, put back, then a second is picked. What is the probability of getting at least one ${c.a}?`, {A:r,B:b}, 2, true, s=>s.includes('A'),
+    [exFrStr(exFr(r*r,n*n)), exFrStr(exFr(2*r,n)), exFrStr(exFr(b*b,n*n)), exFrStr(exFr(r,n))],
+    (f)=>`P(no ${c.a}) = ${b}/${n} × ${b}/${n} = ${exFrStr(exFr(b*b,n*n))}. P(at least one ${c.a}) = 1 - ${exFrStr(exFr(b*b,n*n))} = ${exFrStr(f)}.`);
+};
+
+
 const MATHS9_TOPICS = [
   {key:'algebra', label:'Algebra: Expand & Factorise', gen:M9.algebra},
   {key:'linear', label:'Linear Equations & Graphs', gen:M9.linear},
@@ -1533,6 +2148,12 @@ const MATHS9_TOPICS = [
   {key:'scientificNotation9', label:'Scientific Notation', gen:M9.scientificNotation},
   {key:'simultaneousIntro9', label:'Simultaneous Equations', gen:M9.simultaneousIntro},
   {key:'similarityCongruence9', label:'Similarity & Congruence', gen:M9.similarityCongruence},
+  {key:'examIndices9', label:'Exam prep: Indices', gen:M9.examIndices, exam:true},
+  {key:'examMagnitude9', label:'Exam prep: Numbers of any magnitude', gen:M9.examMagnitude, exam:true},
+  {key:'examAlgebra9', label:'Exam prep: Algebraic techniques', gen:M9.examAlgebra, exam:true},
+  {key:'examEquations9', label:'Exam prep: Equations', gen:M9.examEquations, exam:true},
+  {key:'examLinear9', label:'Exam prep: Linear relationships', gen:M9.examLinear, exam:true},
+  {key:'examProbability9', label:'Exam prep: Probability (multistage)', gen:M9.examProbability, exam:true},
 ];
 
 /* ============================= MATHS GENERATORS — YEAR 8 ============================= */
@@ -3102,7 +3723,7 @@ const TOPIC_SETS = {
 };
 
 /* ============================= APP STATE & UI ============================= */
-const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null };
+const state = { year:null, subject:null, selectedTopics:new Set(), level:'intermediate', length:30, questions:[], index:0, answers:[], studentName:'', isNaplan:false, naplanDomain:null, examMock:false };
 
 const studentNameInput = document.getElementById('student-name-input');
 studentNameInput.addEventListener('input', ()=>{ state.studentName = studentNameInput.value.trim(); });
@@ -3191,7 +3812,11 @@ topicSelectAll.addEventListener('change', ()=>{
 function updateStartButton(){
   const ready = state.year && state.subject && state.selectedTopics.size>0;
   startBtn.disabled = !ready;
-  startBtn.textContent = ready ? `Start ${state.length}-question test` : 'Choose year, subject & at least one topic';
+  const customN = customOnlyCount();
+  const shownLen = customN!==null ? Math.min(state.length, customN) : state.length;
+  startBtn.textContent = ready ? `Start ${shownLen}-question test` : 'Choose year, subject & at least one topic';
+  updateOnlyCustomBtn();
+  updateExamMockBtn();
   startBtn.className = 'btn btn-stamp' + (state.subject ? ' '+state.subject : '');
 }
 
@@ -3203,6 +3828,7 @@ startBtn.addEventListener('click', ()=>{
 
 function topicSummaryLabel(){
   if(state.isNaplan) return state.naplanDomain==='numeracy' ? 'NAPLAN Numeracy' : 'NAPLAN Spelling';
+  if(state.examMock) return 'Year 9 exam mock';
   const allTopics = TOPIC_SETS[state.year][state.subject];
   if(state.selectedTopics.size === allTopics.length) return 'All topics';
   const chosen = allTopics.filter(t=>state.selectedTopics.has(t.key));
@@ -3240,24 +3866,366 @@ function weightedTopicPick(topics){
   return topics[topics.length-1];
 }
 
+
+/* ============================= YEAR 9 EXAM MOCK =============================
+   30 questions in the same mix as the written exam: Indices 5, Numbers of any magnitude 5,
+   Algebraic techniques 5, Equations 5, Linear relationships 6, Probability 4.
+   New numbers every time. Goes straight to the questions (closed-book style, no warm-up). */
+const EXAM9_PLAN = [
+  {key:'examIndices9',     n:{basic:2, intermediate:2, advanced:1}},
+  {key:'examMagnitude9',   n:{basic:2, intermediate:2, advanced:1}},
+  {key:'examAlgebra9',     n:{basic:1, intermediate:2, advanced:2}},
+  {key:'examEquations9',   n:{basic:1, intermediate:3, advanced:1}},
+  {key:'examLinear9',      n:{basic:2, intermediate:3, advanced:1}},
+  {key:'examProbability9', n:{basic:1, intermediate:2, advanced:1}},
+];
+function buildAndStartExamMock(){
+  state.isNaplan = false;
+  state.examMock = true;
+  state.sessionStartTime = Date.now();
+  state.year = '9'; state.subject = 'maths'; state.level = 'intermediate';
+  Object.keys(usedBank).forEach(k=>delete usedBank[k]);
+  const byKey = {};
+  TOPIC_SETS['9'].maths.forEach(t=>{ byKey[t.key] = t; });
+  state.selectedTopics = new Set(EXAM9_PLAN.map(p=>p.key));
+  const seen = new Set(), questions = [];
+  EXAM9_PLAN.forEach(p=>{
+    const t = byKey[p.key];
+    ['basic','intermediate','advanced'].forEach(d=>{
+      for(let i=0;i<p.n[d];i++){
+        let q, tries=0;
+        do { q = t.gen(d); tries++; } while(seen.has(q.prompt) && tries<25);
+        seen.add(q.prompt);
+        q.topicKey = t.key;
+        q.reinforced = false;
+        questions.push(q);
+      }
+    });
+  });
+  state.questions = questions;
+  state.index = 0;
+  state.answers = new Array(questions.length).fill(null);
+  showView('test-view');
+  renderQuestion();
+}
+function updateExamMockBtn(){
+  const b = document.getElementById('exam-mock-btn');
+  if(b) b.style.display = (state.year==='9' && state.subject==='maths') ? 'block' : 'none';
+}
+document.getElementById('exam-mock-btn').addEventListener('click', buildAndStartExamMock);
+
+/* ============================= MY TOPICS (custom question import) =============================
+   Lets a parent/tutor add their own questions from a plain-text template (one question per line,
+   columns separated by |), the same idea as the Han Yu "import patch". Questions are stored on this
+   device only (localStorage) and show up as ★ topics in Practice. Imports always MERGE and skip
+   anything already imported. NAPLAN never uses these. */
+const CUSTOM_STORE_KEY = 'skillforge_custom_v1';
+const CUSTOM_VALID_YEARS = ["7", "8", "9", "10", "11", "12"];
+const CUSTOM_APP_NAME = 'Skill Forge';
+
+function loadCustomStore(){
+  try{
+    const raw = localStorage.getItem(CUSTOM_STORE_KEY);
+    const data = raw ? JSON.parse(raw) : null;
+    return (data && Array.isArray(data.questions)) ? data : {questions:[]};
+  }catch(e){ return {questions:[]}; }
+}
+function saveCustomStore(store){
+  try{ localStorage.setItem(CUSTOM_STORE_KEY, JSON.stringify(store)); return true; }catch(e){ return false; }
+}
+function customSlug(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,''); }
+function customTopicKey(q){ return 'custom_' + customSlug(q.year+'_'+q.subject+'_'+q.topic); }
+function customDupKey(q){ return [q.year, q.subject, q.topic.toLowerCase(), q.question.toLowerCase()].join('|'); }
+// Imported text is shown in HTML in a few places, so < and > are swapped for wide look-alikes
+// (and "&word;" patterns defused) — keeps a question like "x<y" from being read as a tag.
+function customClean(s, max){
+  let t = String(s==null?'':s).trim();
+  t = t.replace(/</g,'\uFF1C').replace(/>/g,'\uFF1E').replace(/&(?=[#a-zA-Z0-9]+;)/g,'\uFF06');
+  return t.slice(0, max);
+}
+function customNormYear(v){
+  const s = String(v||'').trim().toLowerCase().replace(/^(year|yr|y)\s*/,'');
+  if(CUSTOM_VALID_YEARS.includes('K') && ['k','kinder','kindergarten','foundation','f'].includes(s)) return 'K';
+  return CUSTOM_VALID_YEARS.includes(s) ? s : null;
+}
+function customNormSubject(v){
+  const s = String(v||'').trim().toLowerCase();
+  if(['maths','math','mathematics','numeracy'].includes(s)) return 'maths';
+  if(['english','literacy','spelling','reading'].includes(s)) return 'english';
+  return null;
+}
+function customNormDiff(v){
+  const s = String(v||'').trim().toLowerCase();
+  if(s==='' || ['medium','intermediate','med'].includes(s)) return 'intermediate';
+  if(['easy','basic'].includes(s)) return 'basic';
+  if(['hard','advanced'].includes(s)) return 'advanced';
+  return null;
+}
+
+function parseCustomText(text, store){
+  const existing = new Set(store.questions.map(customDupKey));
+  const added=[], skipped=[], invalid=[];
+  String(text||'').replace(/\r/g,'').split('\n').forEach((raw, idx)=>{
+    const lineNo = idx+1;
+    const line = raw.trim();
+    if(!line || line.startsWith('#')) return;
+    const bad = reason => { invalid.push({line:lineNo, reason}); };
+    const p = line.split('|').map(s=>s.trim());
+    if(p.length<7){ bad('needs at least 7 columns separated by | (year | subject | topic | difficulty | type | question | answer)'); return; }
+    if(p.length>11){ bad('too many | characters - please remove any | inside your question or answers'); return; }
+    const year = customNormYear(p[0]);
+    if(!year){ bad('year "'+customClean(p[0],20)+'" is not valid (use '+CUSTOM_VALID_YEARS.join(', ')+')'); return; }
+    const subject = customNormSubject(p[1]);
+    if(!subject){ bad('subject "'+customClean(p[1],20)+'" must be maths or english'); return; }
+    const topic = customClean(p[2], 50);
+    if(!topic){ bad('topic name is empty'); return; }
+    const difficulty = customNormDiff(p[3]);
+    if(!difficulty){ bad('difficulty "'+customClean(p[3],20)+'" must be easy, medium or hard'); return; }
+    const question = customClean(p[5], 400);
+    if(!question){ bad('question is empty'); return; }
+    const answer = customClean(p[6], 120);
+    if(!answer){ bad('answer is empty'); return; }
+    const wrong = [p[7], p[8], p[9]].map(w=>customClean(w||'', 120)).filter(Boolean);
+    let type = String(p[4]||'').toLowerCase();
+    if(type===''){ type = wrong.length ? 'choice' : 'number'; }
+    else if(['choice','mcq','multiple','multiplechoice'].includes(type)) type = 'choice';
+    else if(['number','numeric','num','typed'].includes(type)) type = 'number';
+    else { bad('type "'+customClean(p[4],20)+'" must be choice or number'); return; }
+    const explanation = customClean(p[10]||'', 500);
+    let finalAnswer = answer;
+    if(type==='choice'){
+      if(wrong.length<1){ bad('choice questions need at least one wrong answer'); return; }
+      const seen = new Set([answer.toLowerCase()]);
+      for(const w of wrong){
+        if(seen.has(w.toLowerCase())){ bad('wrong answers must be different from the correct answer and from each other'); return; }
+        seen.add(w.toLowerCase());
+      }
+    } else {
+      const num = parseFloat(answer.replace(/,/g,''));
+      if(isNaN(num)){ bad('answer "'+answer+'" must be a number for number questions'); return; }
+      finalAnswer = String(num);
+    }
+    const item = {year, subject, topic, difficulty, type, question, answer:finalAnswer, wrong: type==='choice' ? wrong : [], explanation};
+    const dk = customDupKey(item);
+    if(existing.has(dk)){ skipped.push({line:lineNo}); return; }
+    existing.add(dk);
+    item.id = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+    added.push(item);
+  });
+  return {added, skipped, invalid};
+}
+
+function buildCustomQuestion(item){
+  const fallbackExplain = `The correct answer is ${item.answer}.`;
+  if(item.type==='number'){
+    const dec = (String(item.answer).split('.')[1]||'').length;
+    const tol = dec>0 ? 0.5*Math.pow(10,-dec) : 0.001;
+    return numQ(item.topic, item.difficulty, item.question, parseFloat(item.answer), {tolerance:tol, explanation:item.explanation||fallbackExplain});
+  }
+  return mcqQ(item.topic, item.difficulty, item.question, item.answer, item.wrong, item.explanation||fallbackExplain);
+}
+
+function registerCustomTopics(){
+  Object.keys(TOPIC_SETS).forEach(y=>{
+    ['maths','english'].forEach(s=>{
+      const arr = TOPIC_SETS[y][s];
+      for(let i=arr.length-1;i>=0;i--){ if(arr[i].custom) arr.splice(i,1); }
+    });
+  });
+  const groups = {};
+  loadCustomStore().questions.forEach(q=>{
+    if(!TOPIC_SETS[q.year] || !TOPIC_SETS[q.year][q.subject]) return;
+    const k = customTopicKey(q);
+    (groups[k] = groups[k] || []).push(q);
+  });
+  Object.keys(groups).forEach(key=>{
+    const list = groups[key], f = list[0];
+    TOPIC_SETS[f.year][f.subject].push({
+      key, label:'\u2605 '+f.topic, custom:true, questions:list, count:list.length,
+      gen: diff=>{
+        let pool = list.filter(q=>q.difficulty===diff);
+        const usingAll = pool.length===0;
+        if(usingAll) pool = list;
+        const item = pickFromBank('custom_'+key+'_'+(usingAll?'all':diff), pool);
+        return buildCustomQuestion(item);
+      }
+    });
+  });
+}
+
+// When only custom topics are ticked, the test is exactly those questions (each once, shuffled).
+function customOnlyCount(){
+  if(!state.year || !state.subject || state.selectedTopics.size===0) return null;
+  const topics = TOPIC_SETS[state.year][state.subject].filter(t=>state.selectedTopics.has(t.key));
+  if(!topics.length || !topics.every(t=>t.custom)) return null;
+  return topics.reduce((a,t)=>a+t.count, 0);
+}
+function updateOnlyCustomBtn(){
+  const btn = document.getElementById('topic-only-custom-btn');
+  if(!btn) return;
+  const has = state.year && state.subject && TOPIC_SETS[state.year][state.subject].some(t=>t.custom);
+  btn.style.display = has ? 'inline-block' : 'none';
+}
+document.getElementById('topic-only-custom-btn').addEventListener('click', ()=>{
+  if(!state.year || !state.subject) return;
+  const customKeys = TOPIC_SETS[state.year][state.subject].filter(t=>t.custom).map(t=>t.key);
+  state.selectedTopics = new Set(customKeys);
+  topicCheckboxes.querySelectorAll('.topic-cb').forEach(cb=>{ cb.checked = state.selectedTopics.has(cb.value); });
+  topicSelectAll.checked = false;
+  updateStartButton();
+});
+
+/* --- Template, export, import UI --- */
+function customHeaderLines(){
+  return [
+    '# '+CUSTOM_APP_NAME+' - question import template',
+    '# One question per line. Columns are separated by the | character. Lines starting with # are ignored.',
+    '# Save as a .txt file (UTF-8) and import it on the My Topics tab. Imports always add to what you already have.',
+    '#',
+    '# year | subject | topic | difficulty | type | question | answer | wrong1 | wrong2 | wrong3 | explanation',
+    '#',
+    '# year: '+CUSTOM_VALID_YEARS.join(', '),
+    '# subject: maths or english',
+    '# topic: any name you like. Questions with the same year, subject and topic are grouped into one topic',
+    '# difficulty: easy, medium or hard (blank = medium)',
+    '# type: choice (multiple choice) or number (the student types a number). Blank = choice if wrong answers are given, otherwise number',
+    '# answer: the correct answer',
+    '# wrong1-wrong3: wrong options for choice questions (1 to 3 needed). Leave empty for number questions',
+    '# explanation: optional - shown when the student reviews their answers',
+    '# Please do not use the | character inside your text. < and > are shown as wide look-alike symbols (use words or the symbols <= >= if you can).'
+  ];
+}
+function downloadTextFile(filename, text){
+  const blob = new Blob(['\uFEFF'+text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 150);
+}
+document.getElementById('custom-template-btn').addEventListener('click', ()=>{
+  const lines = customHeaderLines().concat(['#', '# Examples - delete these or keep them to test the import:'], ["9 | maths | Week 3 Algebra | medium | choice | Expand 3(x + 4) | 3x + 12 | 3x + 4 | x + 12 | 3x + 7 | Multiply both terms inside the bracket by 3.", "9 | maths | Week 3 Algebra | easy | number | Solve 2x + 3 = 11. What is x? | 4 | | | | Subtract 3 from both sides, then divide by 2.", "8 | english | Class novel words | easy | choice | What does \"reluctant\" mean? | unwilling | eager | tired | angry |"]);
+  downloadTextFile('SkillForge_Question_Template.txt', lines.join('\r\n')+'\r\n');
+});
+document.getElementById('custom-export-btn').addEventListener('click', ()=>{
+  const store = loadCustomStore();
+  if(!store.questions.length){ renderCustomResult({added:[],skipped:[],invalid:[]}, true, 'Nothing to export yet - import some questions first.'); return; }
+  const diffLabel = {basic:'easy', intermediate:'medium', advanced:'hard'};
+  const lines = customHeaderLines().concat(['#']);
+  store.questions.forEach(q=>{
+    const w = (q.wrong||[]).concat(['','','']).slice(0,3);
+    lines.push([q.year, q.subject, q.topic, diffLabel[q.difficulty]||'medium', q.type, q.question, q.answer, w[0], w[1], w[2], q.explanation||''].join(' | '));
+  });
+  downloadTextFile('SkillForge_My_Questions.txt', lines.join('\r\n')+'\r\n');
+});
+
+function renderCustomResult(res, saved, message){
+  const el = document.getElementById('custom-result');
+  if(message){ el.innerHTML = '<div class="card"><p class="review-line">'+message+'</p></div>'; return; }
+  if(saved===false){
+    el.innerHTML = '<div class="card" style="border-color:var(--bad);"><p class="review-line"><b>Could not save.</b> This browser blocked or filled its storage, so nothing was imported.</p></div>';
+    return;
+  }
+  const errs = res.invalid.slice(0,10).map(i=>'<p class="review-line">'+(i.line? 'Line '+i.line+': ' : '')+i.reason+'</p>').join('');
+  const more = res.invalid.length>10 ? '<p class="review-line">...and '+(res.invalid.length-10)+' more.</p>' : '';
+  el.innerHTML = '<div class="card"><p class="section-label">Import result</p>'
+    + '<p class="review-line"><b>'+res.added.length+'</b> added &nbsp;·&nbsp; <b>'+res.skipped.length+'</b> skipped (already imported) &nbsp;·&nbsp; <b>'+res.invalid.length+'</b> need fixing</p>'
+    + (res.invalid.length ? '<div class="working-block"><p class="working-label">Lines to fix, then import again</p>'+errs+more+'</div>' : '')
+    + '</div>';
+}
+function importCustomText(text){
+  const store = loadCustomStore();
+  const res = parseCustomText(text, store);
+  let saved = true;
+  if(res.added.length){
+    store.questions = store.questions.concat(res.added);
+    saved = saveCustomStore(store);
+    if(saved){
+      registerCustomTopics();
+      if(state.year && state.subject) refreshTopics();
+    }
+  }
+  renderCustomResult(res, saved);
+  renderCustomView();
+  return res;
+}
+function deleteCustomTopic(key){
+  if(!confirm('Delete this topic and all of its questions from this device?')) return;
+  const store = loadCustomStore();
+  store.questions = store.questions.filter(q=>customTopicKey(q)!==key);
+  saveCustomStore(store);
+  registerCustomTopics();
+  if(state.year && state.subject) refreshTopics();
+  renderCustomView();
+}
+function renderCustomView(){
+  const store = loadCustomStore();
+  const groups = {};
+  store.questions.forEach(q=>{
+    const k = customTopicKey(q);
+    if(!groups[k]) groups[k] = {key:k, year:q.year, subject:q.subject, topic:q.topic, count:0};
+    groups[k].count++;
+  });
+  const list = Object.values(groups).sort((a,b)=>a.topic.localeCompare(b.topic));
+  const el = document.getElementById('custom-topic-list');
+  if(!list.length){ el.innerHTML = '<p class="history-empty">Nothing imported yet.</p>'; return; }
+  el.innerHTML = list.map(g=>
+    '<div class="history-log-row"><div><div class="history-log-meta"><b>\u2605 '+g.topic+'</b></div>'
+    + '<div class="history-log-date">Year '+g.year+' · '+(g.subject==='maths'?'Maths':'English')+' · '+g.count+' question'+(g.count===1?'':'s')+'</div></div>'
+    + '<button class="link-btn" data-del="'+g.key+'">Delete</button></div>'
+  ).join('');
+  el.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click', ()=>deleteCustomTopic(b.dataset.del)));
+}
+document.getElementById('custom-import-btn').addEventListener('click', ()=>document.getElementById('custom-file-input').click());
+document.getElementById('custom-file-input').addEventListener('change', e=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{ importCustomText(String(reader.result||'')); };
+  reader.onerror = ()=>{ renderCustomResult({added:[],skipped:[],invalid:[{line:0,reason:'could not read that file'}]}, true); };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+document.getElementById('custom-paste-import-btn').addEventListener('click', ()=>{
+  const area = document.getElementById('custom-paste-area');
+  const res = importCustomText(area.value);
+  if(res.added.length) area.value = '';
+});
+
+registerCustomTopics();
+
+
 function buildAndStartTest(){
   state.isNaplan = false;
+  state.examMock = false;
   state.sessionStartTime = Date.now();
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   const allTopics = TOPIC_SETS[state.year][state.subject];
   const topics = allTopics.filter(t=>state.selectedTopics.has(t.key));
-  const dist = distByLength(state.length, state.level);
-  let sequence = [];
-  Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
-  sequence = shuffle(sequence);
-
-  const questions = sequence.map(diff=>{
-    const topicObj = topics.length>1 ? weightedTopicPick(topics) : topics[0];
-    const q = topicObj.gen(diff);
-    q.topicKey = topicObj.key;
-    q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, topicObj.key)]||0) > 0;
-    return q;
-  });
+    let questions;
+  if(topics.length && topics.every(t=>t.custom)){
+    // Only the user's own topics ticked: use exactly their questions, each once, shuffled.
+    const pool = [];
+    topics.forEach(t=>t.questions.forEach(item=>pool.push({t, item})));
+    questions = shuffle(pool).slice(0, state.length).map(({t, item})=>{
+      const q = buildCustomQuestion(item);
+      q.topicKey = t.key;
+      q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, t.key)]||0) > 0;
+      return q;
+    });
+  } else {
+    const dist = distByLength(state.length, state.level);
+    let sequence = [];
+    Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
+    sequence = shuffle(sequence);
+    questions = sequence.map(diff=>{
+      const topicObj = topics.length>1 ? weightedTopicPick(topics) : topics[0];
+      const q = topicObj.gen(diff);
+      q.topicKey = topicObj.key;
+      q.reinforced = (weakTopicCounts[weakKey(state.year, state.subject, topicObj.key)]||0) > 0;
+      return q;
+    });
+  }
 
   state.questions = questions;
   state.index = 0;
@@ -3303,6 +4271,7 @@ naplanStartBtn.addEventListener('click', ()=>{
 function buildAndStartNaplanTest(){
   Object.keys(usedBank).forEach(k=>delete usedBank[k]);
   state.isNaplan = true;
+  state.examMock = false;
   state.naplanDomain = naplanDomain;
   state.year = naplanYear;
   state.level = 'intermediate'; // representative national-average difficulty spread
@@ -3311,7 +4280,7 @@ function buildAndStartNaplanTest(){
   let questions;
   if(naplanDomain==='numeracy'){
     state.subject = 'maths';
-    const topics = TOPIC_SETS[naplanYear].maths;
+    const topics = TOPIC_SETS[naplanYear].maths.filter(t=>!t.custom);
     const dist = distByLength(20, 'intermediate');
     let sequence = [];
     Object.entries(dist).forEach(([d,n])=>{ for(let i=0;i<n;i++) sequence.push(d); });
@@ -4178,7 +5147,7 @@ function showResults(){
   showView('results-view');
 }
 
-document.getElementById('retry-btn').addEventListener('click', buildAndStartTest);
+document.getElementById('retry-btn').addEventListener('click', ()=>{ if(state.examMock) buildAndStartExamMock(); else buildAndStartTest(); });
 document.getElementById('home-btn').addEventListener('click', ()=>showView('home-view'));
 document.getElementById('view-history-from-results-btn').addEventListener('click', ()=>{ switchTab('history'); });
 
@@ -4194,6 +5163,7 @@ function showView(id){
 const tabPracticeBtn = document.getElementById('tab-practice-btn');
 const tabNaplanBtn = document.getElementById('tab-naplan-btn');
 const tabTypingBtn = document.getElementById('tab-typing-btn');
+const tabCustomBtn = document.getElementById('tab-custom-btn');
 const tabHistoryBtn = document.getElementById('tab-history-btn');
 let historyFilters = { student:'all' };
 
@@ -4201,6 +5171,7 @@ function switchTab(tab){
   tabPracticeBtn.classList.remove('selected');
   tabNaplanBtn.classList.remove('selected');
   tabTypingBtn.classList.remove('selected');
+  tabCustomBtn.classList.remove('selected');
   tabHistoryBtn.classList.remove('selected');
   if(tab==='history'){
     tabHistoryBtn.classList.add('selected');
@@ -4209,6 +5180,10 @@ function switchTab(tab){
   } else if(tab==='naplan'){
     tabNaplanBtn.classList.add('selected');
     showView('naplan-home-view');
+  } else if(tab==='custom'){
+    tabCustomBtn.classList.add('selected');
+    renderCustomView();
+    showView('custom-view');
   } else if(tab==='typing'){
     tabTypingBtn.classList.add('selected');
     showView('typing-home-view');
@@ -4220,6 +5195,7 @@ function switchTab(tab){
 tabPracticeBtn.addEventListener('click', ()=>switchTab('practice'));
 tabNaplanBtn.addEventListener('click', ()=>switchTab('naplan'));
 tabTypingBtn.addEventListener('click', ()=>switchTab('typing'));
+tabCustomBtn.addEventListener('click', ()=>switchTab('custom'));
 tabHistoryBtn.addEventListener('click', ()=>switchTab('history'));
 
 function renderStudentFilterRow(all){
